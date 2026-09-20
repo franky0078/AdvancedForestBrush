@@ -1,0 +1,32 @@
+.panel { position:fixed !important; width:330rem !important; min-width:330rem !important; max-width:330rem !important; height:auto !important; margin:0 !important; padding:0 !important; overflow:visible !important; z-index:80; color:#eaf1f5; }
+.launcherMount { display:inline-flex; order:-1; margin-right:4rem; }
+.toolModeButton,.stepButton,.iconButton { display:flex; align-items:center; justify-content:center; padding:0; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#f0f6fa; }
+.toolModeButton { width:32rem; height:32rem; }
+.toolModeButton svg { width:22rem; height:22rem; fill:currentColor; }
+.toolModeButton:hover,.stepButton:hover,.iconButton:hover { background:rgba(58,89,108,.9); }
+.launcherSelected { border-color:#70db91; background:linear-gradient(#4d9dd8,#2670bd); }
+.header { width:100%; display:flex; align-items:center; justify-content:space-between; color:#58ccff; font-weight:700; letter-spacing:.5rem; cursor:move; user-select:none; }
+.closeButton { width:30rem; height:30rem; }
+.closeButton img { width:18rem; height:18rem; }
+.content { padding:5rem 8rem 8rem; }
+.settingRow,.distributionRow { display:flex; align-items:center; justify-content:space-between; min-height:34rem; gap:8rem; }
+.settingLabel { flex:0 0 116rem; margin:0; font-size:14rem; font-weight:700; }
+.numberControl { display:flex; align-items:stretch; width:164rem; height:30rem; overflow:hidden; border-radius:3rem; background:rgba(4,10,15,.82); }
+.numberControl button { display:flex; align-items:center; justify-content:center; width:34rem; padding:0; border:0; background:rgba(2,8,12,.95); color:#f4f7f8; }
+.numberControl button:hover { background:rgba(58,89,108,.9); }
+.numberControl button:disabled { color:rgba(244,247,248,.35); }
+.numberControl button svg { width:19rem; height:19rem; fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
+.numberValue { display:flex; flex:1; align-items:center; justify-content:center; min-width:0; background:rgba(77,103,56,.42); }
+.numberValue input { width:58rem; min-width:0; padding:0; border:0; outline:0; background:transparent; color:#fff; text-align:right; font-size:14rem; }
+.numberValue span { min-width:19rem; padding-left:3rem; color:#fff; font-size:13rem; }
+.divider { height:1rem; margin:5rem 0; background:rgba(190,213,232,.18); }
+.distributionRow { align-items:flex-start; }
+.distributionRow .settingLabel { padding-top:7rem; }
+.iconRow { display:flex; flex:1; gap:4rem; }
+.iconButton { position:relative; flex:1 1 0; min-width:0; height:30rem; overflow:visible; }
+.iconButton svg { width:21rem; height:21rem; fill:currentColor; }
+.selected { border-color:#7be49b; background:linear-gradient(#318e58,#176a38); }
+.noiseSettings { display:flex; flex-direction:column; gap:2rem; margin-top:3rem; }
+.hint,.footer { color:rgba(224,234,240,.7); font-size:10.5rem; }
+.hint { margin-top:4rem; }
+.footer { margin-top:9rem; padding-top:7rem; border-top:1rem solid rgba(190,213,232,.15); }
