@@ -297,10 +297,11 @@ export const AdvancedForestBrushPanel = () => {
     const Tooltip = resolver.Tooltip;
     const tooltipTheme = resolver.descriptionTooltipTheme;
     const panelTheme = resolver.toolOptionsPanelTheme?.toolOptionsPanel;
-    const launcher = (
+    const launcherButton = (
         <button
             className={classNames(styles.toolModeButton, panelVisible && styles.launcherSelected)}
-            title={panelVisible ? t.close : t.open}
+            title={Tooltip ? undefined : (panelVisible ? t.close : t.open)}
+            aria-label={panelVisible ? t.close : t.open}
             onClick={() => {
                 if (!panelVisible) rememberTreeControllerPosition();
                 fire("TogglePanel");
@@ -309,6 +310,34 @@ export const AdvancedForestBrushPanel = () => {
             <Glyph name="forest" />
         </button>
     );
+    const launcher = Tooltip
+        ? (
+            <Tooltip tooltip={<div className={tooltipTheme?.title}>{panelVisible ? t.close : t.open}</div>}>
+                {launcherButton}
+            </Tooltip>
+        )
+        : launcherButton;
+
+    const backButton = (
+        <button
+            className={styles.backButton}
+            onClick={() => fire("TogglePanel")}
+            title={Tooltip ? undefined : t.back}
+            aria-label={t.back}
+        >
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+                <path d="M19 7 10 16l9 9" />
+                <path d="M11 16h14" />
+            </svg>
+        </button>
+    );
+    const backControl = Tooltip
+        ? (
+            <Tooltip tooltip={<div className={tooltipTheme?.title}>{t.back}</div>}>
+                {backButton}
+            </Tooltip>
+        )
+        : backButton;
 
     const tooltipButton = (
         glyph: GlyphName,
@@ -345,17 +374,7 @@ export const AdvancedForestBrushPanel = () => {
                     onMouseLeave={() => fire("SetPointerOverUI", false)}
                 >
                     <div className={styles.header}>
-                        <button
-                            className={styles.backButton}
-                            onClick={() => fire("TogglePanel")}
-                            title={t.back}
-                            aria-label={t.back}
-                        >
-                            <svg viewBox="0 0 32 32" aria-hidden="true">
-                                <path d="M19 7 10 16l9 9" />
-                                <path d="M11 16h14" />
-                            </svg>
-                        </button>
+                        {backControl}
                     </div>
 
                     <div className={styles.content}>

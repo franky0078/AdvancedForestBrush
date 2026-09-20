@@ -15,7 +15,7 @@ namespace AdvancedForestBrush
         public void OnLoad(UpdateSystem updateSystem)
         {
             Log = LogManager.GetLogger("AdvancedForestBrush").SetShowsErrorsInUI(false);
-            Log.Info("Advanced Forest Brush 0.1.0 loading");
+            Log.Info("Advanced Forest Brush 0.2.0 loading");
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN());
             GameManager.instance.localizationManager.AddSource("de-DE", new LocaleDE());
             updateSystem.UpdateAt<ForestBrushShapeSystem>(SystemUpdatePhase.ToolUpdate);

@@ -6,7 +6,7 @@
 .toolModeButton:hover,.stepButton:hover,.iconButton:hover { background:rgba(58,89,108,.9); }
 .launcherSelected { border-color:#70db91; background:linear-gradient(#4d9dd8,#2670bd); }
 .header { width:100%; display:flex; align-items:center; justify-content:flex-end; min-height:32rem; color:#58ccff; user-select:none; }
-.backButton { display:flex; align-items:center; justify-content:center; width:26rem; height:26rem; flex:0 0 30rem; padding:0; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#e5f0f8; margin-right: 10rem; margin-top: 3rem; }
+.backButton { display:flex; align-items:center; justify-content:center; width:26rem; height:26rem; flex:0 0 30rem; padding:0; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#e5f0f8; margin-right:10rem; margin-top:3rem; }
 .backButton:hover { background:rgba(58,89,108,.9); color:#fff; }
 .backButton svg { width:21rem; height:21rem; fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
 .content { padding:5rem 8rem 8rem; }
