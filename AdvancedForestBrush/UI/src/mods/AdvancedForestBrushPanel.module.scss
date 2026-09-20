@@ -1,13 +1,14 @@
-.panel { position:fixed !important; width:330rem !important; min-width:330rem !important; max-width:330rem !important; height:auto !important; margin:0 !important; padding:0 !important; overflow:visible !important; z-index:80; color:#eaf1f5; }
-.launcherMount { display:inline-flex; order:-1; margin-right:4rem; }
+.panel { position:fixed !important; top:auto !important; width:350rem !important; min-width:350rem !important; max-width:350rem !important; height:auto !important; margin:0 !important; padding:0 !important; overflow:visible !important; z-index:80; color:#eaf1f5; }
+.launcherMount { display:inline-flex; flex:0 0 32rem; margin-left:30rem; margin-right:auto; }
 .toolModeButton,.stepButton,.iconButton { display:flex; align-items:center; justify-content:center; padding:0; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#f0f6fa; }
-.toolModeButton { width:32rem; height:32rem; }
-.toolModeButton svg { width:22rem; height:22rem; fill:currentColor; }
+.toolModeButton { width:28rem; height:28rem; }
+.toolModeButton svg { width:24rem; height:24rem; fill:currentColor; }
 .toolModeButton:hover,.stepButton:hover,.iconButton:hover { background:rgba(58,89,108,.9); }
 .launcherSelected { border-color:#70db91; background:linear-gradient(#4d9dd8,#2670bd); }
-.header { width:100%; display:flex; align-items:center; justify-content:space-between; color:#58ccff; font-weight:700; letter-spacing:.5rem; cursor:move; user-select:none; }
-.closeButton { width:30rem; height:30rem; }
-.closeButton img { width:18rem; height:18rem; }
+.header { width:100%; display:flex; align-items:center; justify-content:flex-end; min-height:32rem; color:#58ccff; user-select:none; }
+.backButton { display:flex; align-items:center; justify-content:center; width:26rem; height:26rem; flex:0 0 30rem; padding:0; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#e5f0f8; margin-right: 10rem; margin-top: 3rem; }
+.backButton:hover { background:rgba(58,89,108,.9); color:#fff; }
+.backButton svg { width:21rem; height:21rem; fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
 .content { padding:5rem 8rem 8rem; }
 .settingRow,.distributionRow { display:flex; align-items:center; justify-content:space-between; min-height:34rem; gap:8rem; }
 .settingLabel { flex:0 0 116rem; margin:0; font-size:14rem; font-weight:700; }
@@ -27,6 +28,10 @@
 .iconButton svg { width:21rem; height:21rem; fill:currentColor; }
 .selected { border-color:#7be49b; background:linear-gradient(#318e58,#176a38); }
 .noiseSettings { display:flex; flex-direction:column; gap:2rem; margin-top:3rem; }
+.polygonStatus { display:flex; align-items:center; justify-content:space-between; gap:8rem; min-height:32rem; padding:2rem 0; font-size:12rem; color:rgba(234,241,245,.8); }
+.polygonStatus .ready { color:#7be49b; font-weight:700; }
+.polygonStatus button { min-height:25rem; padding:2rem 8rem; border:1rem solid rgba(190,213,232,.25); border-radius:3rem; background:rgba(5,13,18,.82); color:#f0f6fa; font-size:11rem; }
+.polygonStatus button:hover { background:rgba(58,89,108,.9); }
 .hint,.footer { color:rgba(224,234,240,.7); font-size:10.5rem; }
 .hint { margin-top:4rem; }
 .footer { margin-top:9rem; padding-top:7rem; border-top:1rem solid rgba(190,213,232,.15); }

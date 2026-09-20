@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <Configurations>Debug;Release</Configurations>
@@ -11,6 +11,7 @@
   <Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" />
   <ItemGroup>
     <Reference Include="Colossal.Core"><HintPath>$(ManagedPath)\Colossal.Core.dll</HintPath><Private>False</Private></Reference>
+    <Reference Include="Colossal.Mathematics"><HintPath>$(ManagedPath)\Colossal.Mathematics.dll</HintPath><Private>False</Private></Reference>
     <Reference Include="Colossal.Logging"><HintPath>$(ManagedPath)\Colossal.Logging.dll</HintPath><Private>False</Private></Reference>
 	<Reference Include="Colossal.Localization"><HintPath>$(ManagedPath)\Colossal.Localization.dll</HintPath><Private>False</Private></Reference>
     <Reference Include="Colossal.UI.Binding"><HintPath>$(ManagedPath)\Colossal.UI.Binding.dll</HintPath><Private>False</Private></Reference>
@@ -18,6 +19,7 @@
     <Reference Include="Unity.Collections"><HintPath>$(ManagedPath)\Unity.Collections.dll</HintPath><Private>False</Private></Reference>
     <Reference Include="Unity.Entities"><HintPath>$(ManagedPath)\Unity.Entities.dll</HintPath><Private>False</Private></Reference>
     <Reference Include="Unity.Mathematics"><HintPath>$(ManagedPath)\Unity.Mathematics.dll</HintPath><Private>False</Private></Reference>
+    <Reference Include="Unity.InputSystem"><HintPath>$(ManagedPath)\Unity.InputSystem.dll</HintPath><Private>False</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(ManagedPath)\UnityEngine.CoreModule.dll</HintPath><Private>False</Private></Reference>
   </ItemGroup>
   <Target Name="InstallUI" AfterTargets="AfterBuild">

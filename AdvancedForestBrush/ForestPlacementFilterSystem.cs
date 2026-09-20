@@ -29,9 +29,15 @@ namespace AdvancedForestBrush
 
         protected override void OnUpdate()
         {
-            if (ForestBrushState.NoiseMode == ForestNoiseMode.Uniform ||
+            if (!ForestBrushState.PanelVisible ||
                 m_ToolSystem.activeTool != m_ObjectToolSystem ||
                 m_ObjectToolSystem.actualMode != ObjectToolSystem.Mode.Brush)
+            {
+                return;
+            }
+
+            if (ForestBrushState.Shape == ForestBrushShape.Circle &&
+                ForestBrushState.NoiseMode == ForestNoiseMode.Uniform)
             {
                 return;
             }
@@ -46,7 +52,15 @@ namespace AdvancedForestBrush
                     continue;
                 }
 
-                if (!Keep(definition.m_Position, creation.m_RandomSeed))
+                bool outsideShape =
+                    ForestBrushState.SuppressPolygonPlacement ||
+                    !ForestBrushState.Contains(definition.m_Position);
+
+                bool rejectedByNoise =
+                    ForestBrushState.NoiseMode != ForestNoiseMode.Uniform &&
+                    !Keep(definition.m_Position, creation.m_RandomSeed);
+
+                if (outsideShape || rejectedByNoise)
                 {
                     EntityManager.DestroyEntity(entity);
                 }
