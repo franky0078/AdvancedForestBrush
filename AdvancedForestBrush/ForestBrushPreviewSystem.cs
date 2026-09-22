@@ -18,7 +18,12 @@ namespace AdvancedForestBrush
     [UpdateAfter(typeof(ForestBrushShapeSystem))]
     public partial class ForestBrushPreviewSystem : GameSystemBase
     {
-        private const int PolygonTextureSize = 256;
+        private const int PreviewTextureSize = 128;
+        private const float HaloPixels = 12f;
+        private const float InnerPixels =
+            PreviewTextureSize - HaloPixels * 2f;
+        private const float PreviewScale =
+            PreviewTextureSize / InnerPixels;
 
         private EntityQuery m_BrushQuery;
         private EntityQuery m_SettingsQuery;
@@ -30,6 +35,7 @@ namespace AdvancedForestBrush
             new HashSet<Entity>();
         private Mesh m_Mesh;
         private MaterialPropertyBlock m_Properties;
+        private Texture2D m_RectangleTexture;
         private Texture2D m_PolygonTexture;
         private int m_BuiltPolygonVersion = -1;
         private int m_BrushTexture;
@@ -93,6 +99,13 @@ namespace AdvancedForestBrush
                     EntityManager.AddComponent<Hidden>(entity);
                     m_HiddenVanillaBrushes.Add(entity);
                 }
+            }
+
+            if ((ForestBrushState.Shape == ForestBrushShape.Square ||
+                 ForestBrushState.Shape == ForestBrushShape.Rectangle) &&
+                m_RectangleTexture == null)
+            {
+                BuildRectangleTexture();
             }
 
             if (ForestBrushState.Shape == ForestBrushShape.Polygon &&
@@ -175,7 +188,7 @@ namespace AdvancedForestBrush
                     ? width
                     : ForestBrushState.ShapeLength;
                 rotation = ForestBrushState.RotationDegrees;
-                texture = Texture2D.whiteTexture;
+                texture = m_RectangleTexture;
             }
 
             if (texture == null || width <= 0f || length <= 0f)
@@ -189,7 +202,10 @@ namespace AdvancedForestBrush
             Matrix4x4 matrix = Matrix4x4.TRS(
                 new Vector3(cursor.x, bottom, cursor.z),
                 Quaternion.Euler(0f, rotation, 0f),
-                new Vector3(width * 0.5f, height, length * 0.5f));
+                new Vector3(
+                    width * PreviewScale * 0.5f,
+                    height,
+                    length * PreviewScale * 0.5f));
 
             MaterialPropertyBlock properties = GetProperties();
             properties.Clear();
@@ -220,8 +236,8 @@ namespace AdvancedForestBrush
             if (m_PolygonTexture == null)
             {
                 m_PolygonTexture = new Texture2D(
-                    PolygonTextureSize,
-                    PolygonTextureSize,
+                    PreviewTextureSize,
+                    PreviewTextureSize,
                     TextureFormat.RGBA32,
                     false,
                     true)
@@ -233,30 +249,130 @@ namespace AdvancedForestBrush
             }
 
             Color32[] pixels =
-                new Color32[PolygonTextureSize * PolygonTextureSize];
+                new Color32[PreviewTextureSize * PreviewTextureSize];
             float halfWidth = math.max(0.5f, ForestBrushState.PolygonHalfWidth);
             float halfLength = math.max(0.5f, ForestBrushState.PolygonHalfLength);
+            float textureHalfWidth = halfWidth * PreviewScale;
+            float textureHalfLength = halfLength * PreviewScale;
+            float haloWidth = math.max(
+                0.25f,
+                math.min(halfWidth, halfLength) *
+                (HaloPixels * 2f / InnerPixels));
 
-            for (int y = 0; y < PolygonTextureSize; y++)
+            for (int y = 0; y < PreviewTextureSize; y++)
             {
                 float localZ =
-                    math.lerp(-halfLength, halfLength, (y + 0.5f) / PolygonTextureSize);
+                    math.lerp(
+                        -textureHalfLength,
+                        textureHalfLength,
+                        (y + 0.5f) / PreviewTextureSize);
 
-                for (int x = 0; x < PolygonTextureSize; x++)
+                for (int x = 0; x < PreviewTextureSize; x++)
                 {
                     float localX =
-                        math.lerp(-halfWidth, halfWidth, (x + 0.5f) / PolygonTextureSize);
+                        math.lerp(
+                            -textureHalfWidth,
+                            textureHalfWidth,
+                            (x + 0.5f) / PreviewTextureSize);
+                    float2 point = new float2(localX, localZ);
                     bool inside = ForestBrushState.IsPointInsideLocalPolygon(
-                        new float2(localX, localZ));
-                    pixels[y * PolygonTextureSize + x] = inside
-                        ? new Color32(255, 255, 255, 255)
-                        : new Color32(0, 0, 0, 0);
+                        point);
+                    pixels[y * PreviewTextureSize + x] = GetPreviewPixel(
+                        inside,
+                        DistanceToPolygonEdge(point),
+                        haloWidth);
                 }
             }
 
             m_PolygonTexture.SetPixels32(pixels);
             m_PolygonTexture.Apply(false, false);
             m_BuiltPolygonVersion = ForestBrushState.PolygonVersion;
+        }
+
+        private void BuildRectangleTexture()
+        {
+            m_RectangleTexture = new Texture2D(
+                PreviewTextureSize,
+                PreviewTextureSize,
+                TextureFormat.RGBA32,
+                false,
+                true)
+            {
+                name = "Advanced Forest Brush Rectangle",
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+
+            Color32[] pixels =
+                new Color32[PreviewTextureSize * PreviewTextureSize];
+
+            for (int y = 0; y < PreviewTextureSize; y++)
+            {
+                for (int x = 0; x < PreviewTextureSize; x++)
+                {
+                    float px = x + 0.5f;
+                    float py = y + 0.5f;
+                    bool inside =
+                        px >= HaloPixels &&
+                        px <= PreviewTextureSize - HaloPixels &&
+                        py >= HaloPixels &&
+                        py <= PreviewTextureSize - HaloPixels;
+                    float2 outside = new float2(
+                        math.max(
+                            math.max(HaloPixels - px, 0f),
+                            px - (PreviewTextureSize - HaloPixels)),
+                        math.max(
+                            math.max(HaloPixels - py, 0f),
+                            py - (PreviewTextureSize - HaloPixels)));
+                    pixels[y * PreviewTextureSize + x] = GetPreviewPixel(
+                        inside,
+                        math.length(outside),
+                        HaloPixels);
+                }
+            }
+
+            m_RectangleTexture.SetPixels32(pixels);
+            m_RectangleTexture.Apply(false, true);
+        }
+
+        private static Color32 GetPreviewPixel(
+            bool inside,
+            float distanceToEdge,
+            float haloWidth)
+        {
+            if (inside)
+            {
+                return new Color32(255, 255, 255, 255);
+            }
+
+            float opacity = 1f - math.smoothstep(
+                0f,
+                haloWidth,
+                math.max(0f, distanceToEdge));
+            byte alpha = (byte)math.round(math.saturate(opacity) * 255f);
+            return new Color32(255, 255, 255, alpha);
+        }
+
+        private static float DistanceToPolygonEdge(float2 point)
+        {
+            float minimum = float.MaxValue;
+            int count = ForestBrushState.PolygonLocalPoints.Count;
+
+            for (int i = 0; i < count; i++)
+            {
+                float2 start = ForestBrushState.PolygonLocalPoints[i];
+                float2 end = ForestBrushState.PolygonLocalPoints[(i + 1) % count];
+                float2 segment = end - start;
+                float lengthSquared = math.lengthsq(segment);
+                float amount = lengthSquared > 0.0001f
+                    ? math.saturate(math.dot(point - start, segment) / lengthSquared)
+                    : 0f;
+                minimum = math.min(
+                    minimum,
+                    math.distance(point, start + segment * amount));
+            }
+
+            return minimum;
         }
 
         private Mesh GetMesh()
@@ -309,6 +425,11 @@ namespace AdvancedForestBrush
             if (m_PolygonTexture != null)
             {
                 Object.Destroy(m_PolygonTexture);
+            }
+
+            if (m_RectangleTexture != null)
+            {
+                Object.Destroy(m_RectangleTexture);
             }
 
             base.OnDestroy();
