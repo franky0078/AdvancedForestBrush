@@ -66,8 +66,7 @@ namespace AdvancedForestBrush
                 return;
             }
 
-            // If another tool was selected while our panel was open, immediately
-            // release every ObjectTool value we borrowed. Never fight the user's
+
             // new tool selection from UIUpdate.
             if (!IsVegetationBrush())
             {
@@ -143,8 +142,7 @@ namespace AdvancedForestBrush
                 return;
             }
 
-            // Size, strength and mode belong to the normal Tree Controller /
-            // ObjectTool. Restore them unconditionally so AFB cannot lock its
+
             // values into the normal controller after closing.
             m_ObjectToolSystem.brushSize = m_PreviousBrushSize;
             m_ObjectToolSystem.brushStrength = m_PreviousBrushStrength;

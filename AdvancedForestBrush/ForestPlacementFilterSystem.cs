@@ -1,7 +1,8 @@
 using Colossal.Entities;
-using Colossal.Mathematics;
 using Game;
 using Game.Common;
+using Game.Objects;
+using Game.Prefabs;
 using Game.Tools;
 using Unity.Collections;
 using Unity.Entities;
@@ -15,12 +16,14 @@ namespace AdvancedForestBrush
         private EntityQuery m_BrushDefinitionQuery;
         private ToolSystem m_ToolSystem;
         private ObjectToolSystem m_ObjectToolSystem;
+        private ToolRaycastSystem m_ToolRaycastSystem;
 
         protected override void OnCreate()
         {
             base.OnCreate();
             m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
             m_ObjectToolSystem = World.GetOrCreateSystemManaged<ObjectToolSystem>();
+            m_ToolRaycastSystem = World.GetOrCreateSystemManaged<ToolRaycastSystem>();
             m_DefinitionQuery = SystemAPI.QueryBuilder()
                 .WithAll<CreationDefinition, ObjectDefinition, Updated>()
                 .WithNone<Deleted, Overridden>()
@@ -49,15 +52,14 @@ namespace AdvancedForestBrush
                 return;
             }
 
-            using NativeArray<BrushDefinition> brushDefinitions =
-                customShape
-                    ? m_BrushDefinitionQuery.ToComponentDataArray<BrushDefinition>(Allocator.Temp)
-                    : new NativeArray<BrushDefinition>(0, Allocator.Temp);
+            bool hasShapeCenter =
+                m_ToolRaycastSystem.GetRaycastResult(out RaycastResult raycastResult) &&
+                !EntityManager.HasComponent<Deleted>(raycastResult.m_Owner);
+            float3 shapeCenter = hasShapeCenter
+                ? raycastResult.m_Hit.m_Position
+                : ForestBrushState.CursorPosition;
 
-            // A BrushDefinition is converted into the visible circular Brush
-            // later in Modification1. The custom preview replaces that circle,
-            // so remove only the visual brush definition before it is generated.
-            // ObjectDefinition candidates have already been created separately.
+
             if (customShape)
             {
                 using NativeArray<Entity> brushDefinitionEntities =
@@ -81,10 +83,9 @@ namespace AdvancedForestBrush
                     continue;
                 }
 
-                // Brush-created vegetation definitions are optional. This
-                // remains valid after Tree Controller replaces the prefab and
-                // avoids depending on its internal vegetation component type.
-                if ((creation.m_Flags & CreationFlags.Optional) == 0)
+
+                if (!EntityManager.HasComponent<PlantData>(creation.m_Prefab) &&
+                    !EntityManager.HasComponent<TreeData>(creation.m_Prefab))
                 {
                     continue;
                 }
@@ -92,9 +93,10 @@ namespace AdvancedForestBrush
                 bool outsideShape =
                     ForestBrushState.SuppressPolygonPlacement ||
                     (customShape &&
-                     !ContainsAnyBrushStamp(
-                         definition.m_Position,
-                         brushDefinitions));
+                     ((!hasShapeCenter && !ForestBrushState.HasValidCursor) ||
+                      !ForestBrushState.Contains(
+                          definition.m_Position,
+                          shapeCenter)));
 
                 bool rejectedByNoise =
                     ForestBrushState.NoiseMode != ForestNoiseMode.Uniform &&
@@ -105,40 +107,6 @@ namespace AdvancedForestBrush
                     EntityManager.DestroyEntity(entity);
                 }
             }
-        }
-
-        private static bool ContainsAnyBrushStamp(
-            float3 position,
-            NativeArray<BrushDefinition> brushDefinitions)
-        {
-            for (int i = 0; i < brushDefinitions.Length; i++)
-            {
-                BrushDefinition brush = brushDefinitions[i];
-                float length = MathUtils.Length(brush.m_Line);
-                float spacing = math.max(2.5f, brush.m_Size * 0.25f);
-                int stampCount = 1 + (int)math.floor(length / spacing);
-
-                for (int stamp = 1; stamp <= stampCount; stamp++)
-                {
-                    float3 center = MathUtils.Position(
-                        brush.m_Line,
-                        (float)stamp / stampCount);
-
-                    if (ForestBrushState.Contains(position, center))
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            // Stationary stamps can reach the object-definition query one
-            // update before their BrushDefinition becomes visible. The last
-            // valid tool position is the exact fallback for that case.
-            return brushDefinitions.Length == 0 &&
-                   ForestBrushState.HasValidCursor &&
-                   ForestBrushState.Contains(
-                       position,
-                       ForestBrushState.CursorPosition);
         }
 
         private static bool Keep(float3 position, int randomSeed)

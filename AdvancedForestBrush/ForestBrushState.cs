@@ -180,7 +180,7 @@ namespace AdvancedForestBrush
             }
 
             float2 offset = point - new float2(shapeCenter.x, shapeCenter.z);
-            float radians = math.radians(-RotationDegrees);
+            float radians = math.radians(RotationDegrees);
             float sine = math.sin(radians);
             float cosine = math.cos(radians);
             float2 local = new float2(
