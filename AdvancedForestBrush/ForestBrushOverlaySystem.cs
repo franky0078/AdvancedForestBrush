@@ -42,10 +42,6 @@ namespace AdvancedForestBrush
                 Allocator.TempJob,
                 NativeArrayOptions.UninitializedMemory);
 
-            // Keep the overlay slightly in front of the terrain without moving
-            // it away from the mouse cursor on screen. A fixed world-Y offset
-            // only lines up in a top-down view; moving toward the camera stays
-            // on the same view ray in every camera angle.
             const float previewDepthOffset = 0.22f;
             Camera camera = Camera.main;
             float3 cameraPosition = default;
