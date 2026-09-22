@@ -16,7 +16,6 @@ Advanced Forest Brush expands vegetation placement in Cities: Skylines II
 - Rectangle with separate width, length and rotation controls
 - Multi-point polygon with an unlimited number of corner points
 
-The polygon is created by placing points with the left mouse button. Click the first point or double-click to close it. Once completed, the polygon can be moved like a stamp and rotated before placing vegetation.
 
 ## Distribution modes
 
