@@ -25,6 +25,9 @@ namespace AdvancedForestBrush
 
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(Settings));
             GameManager.instance.localizationManager.AddSource("de-DE", new LocaleDE(Settings));
+            GameManager.instance.localizationManager.AddSource("es-ES", new LocaleES(Settings));
+            GameManager.instance.localizationManager.AddSource("it-IT", new LocaleIT(Settings));
+            GameManager.instance.localizationManager.AddSource("fr-FR", new LocaleFR(Settings));
 
             AssetDatabase.global.LoadSettings(
                 nameof(AdvancedForestBrush),
