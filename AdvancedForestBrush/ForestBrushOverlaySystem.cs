@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace AdvancedForestBrush
 {
@@ -41,9 +42,34 @@ namespace AdvancedForestBrush
                 Allocator.TempJob,
                 NativeArrayOptions.UninitializedMemory);
 
+            // Keep the overlay slightly in front of the terrain without moving
+            // it away from the mouse cursor on screen. A fixed world-Y offset
+            // only lines up in a top-down view; moving toward the camera stays
+            // on the same view ray in every camera angle.
+            const float previewDepthOffset = 0.22f;
+            Camera camera = Camera.main;
+            float3 cameraPosition = default;
+            bool hasCamera = camera != null;
+
+            if (hasCamera)
+            {
+                Vector3 position = camera.transform.position;
+                cameraPosition = new float3(
+                    position.x,
+                    position.y,
+                    position.z);
+            }
+
             for (int i = 0; i < m_Points.Count; i++)
             {
-                points[i] = m_Points[i] + new float3(0f, 0.22f, 0f);
+                float3 point = m_Points[i];
+                float3 offsetDirection = hasCamera
+                    ? math.normalizesafe(
+                        cameraPosition - point,
+                        new float3(0f, 1f, 0f))
+                    : new float3(0f, 1f, 0f);
+
+                points[i] = point + offsetDirection * previewDepthOffset;
             }
 
             OverlayRenderSystem.Buffer buffer =

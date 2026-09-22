@@ -2,13 +2,6 @@
 
 Advanced Forest Brush expands vegetation placement in Cities: Skylines II
 
-
-<p align="center">
-  <img src="AdvancedForestBrush/Properties/Thumbnail.jpg"
-       alt="Advanced Forest Brush"
-       width="600">
-</p>
-
 ## Brush shapes
 
 - Circle with adjustable brush size
@@ -89,14 +82,3 @@ When reporting a problem, please include:
 ## Transparency note
 
 Some parts of the code and user interface were created with AI assistance. AI is also used for debugging and troubleshooting.
-
-## Changes
-
-### Version 0.4.1
-
-- Initial Release
-
-
-## License notes
-
-The project is an independent companion. Concepts and API patterns were studied from Tree Controller, which is MIT licensed. No Tree Controller source files are redistributed in this archive.

@@ -1,37 +1,123 @@
-﻿<Publish>
-	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
-	<ModId Value="" />
-	<!--Name of the mod to display to players-->
-	<DisplayName Value="AdvancedForestBrush" />
-	<!--Short description of the mod-->
-	<ShortDescription Value="This is a short description" />
-	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
-	<!--LongDescription Value="This is a long description" /-->
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Publish>
+	<!-- Add ModId after the first Paradox Mods publication when updating the existing mod. -->
+	<!-- <ModId Value="" /> -->
+
+	<DisplayName Value="Advanced Forest Brush" />
+	<ShortDescription Value="Create natural forests with custom brush shapes, distribution patterns, density controls and tree ages." />
+
 	<LongDescription>
-This is a long description
+		# Advanced Forest Brush
+
+		Advanced Forest Brush expands vegetation placement in Cities: Skylines II
+
+		## Brush shapes
+
+		- Circle with adjustable brush size
+		- Square with adjustable size and rotation
+		- Rectangle with separate width, length and rotation controls
+		- Multi-point polygon with an unlimited number of corner points
+
+		The polygon is created by placing points with the left mouse button. Click the first point or double-click to close it. Once completed, the polygon can be moved like a stamp and rotated before placing vegetation.
+
+		## Distribution modes
+
+		- Uniform
+		- Natural
+		- Clusters
+		- Clearings
+		- Forest edge
+
+		Noise size and irregularity can be adjusted for all non-uniform distribution modes. Brush density can be set from 10% to 300%.
+
+		## Tree ages
+
+		Advanced Forest Brush uses the Tree Controller age selection and supports:
+
+		- Natural age mixture
+		- Saplings
+		- Young trees
+		- Mature trees
+		- Old trees
+		- Multiple selected age groups
+		- Preserve age
+
+		## Features
+
+
+		- Adjustable density from 10% to 300%
+		- Configurable noise size and irregularity
+		- Movable and rotatable completed polygons
+		- Support for the game and editor
+		- English and German localization
+
+		## How to use
+
+		1. Open the vegetation or tree placement tool.
+		2. Select a tree or vegetation asset.
+		3. Open Advanced Forest Brush using its button in the tool interface.
+		4. Select the desired brush shape.
+		5. Adjust size, density, distribution and tree ages.
+		6. Place vegetation with the left mouse button.
+
+		For a polygon:
+
+		1. Select the multi-point polygon shape.
+		2. Left-click to place each corner point.
+		3. Click the first point or double-click to close the polygon.
+		4. Move the completed polygon to the desired position.
+		5. Hold the right mouse button and move the mouse horizontally to rotate it.
+		6. Left-click to place vegetation inside the polygon.
+		7. Press Esc or use **Reset polygon** to start a new polygon.
+
+		## Compatibility
+
+		Advanced Forest Brush works with the normal vegetation placement tool and integrates with Tree Controller for tree-age selection.
+
+		## Language support
+
+		- English
+		- German
+
+		## Bug reports
+
+		When reporting a problem, please include:
+
+		- A description of the problem
+		- The selected brush shape and distribution mode
+		- Steps to reproduce the issue
+
+
+		## Transparency note
+
+		Some parts of the code and user interface were created with AI assistance. AI is also used for debugging and troubleshooting.
+
 	</LongDescription>
-	<!--Thumbnail-->
-	<Thumbnail Value="Properties/Thumbnail.png" />
-	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="" />
-	<!--Tag, can be set multiple times-->
-	<Tag Value="" />
-	<!--Link to the forum post where the mod can be discussed-->
+
+	<!-- Thumbnail -->
+	<Thumbnail Value="Properties/Thumbnail.jpg" />
+	<!--<Screenshot Value="Properties/Screenshot01.jpg" />
+	<Screenshot Value="Properties/Screenshot02.jpg" />
+	<Screenshot Value="Properties/Screenshot03.jpg" />
+	<Screenshot Value="Properties/Screenshot04.jpg" />
+	<Screenshot Value="Properties/Screenshot05.jpg" />
+	<Screenshot Value="Properties/Screenshot06.jpg" />
+	<Screenshot Value="Properties/Screenshot07.jpg" />
+	<Screenshot Value="Properties/Screenshot08.jpg" />
+	<Screenshot Value="Properties/Screenshot09.jpg" /> -->
+
+	<Tag Value="Code Mod" />
+	<Tag Value="Gameplay" />
+
 	<ForumLink Value="" />
-	<!--Version of the mod-->
-	<ModVersion Value="1.0" />
-	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.0.*" />
-	<!--Dependency for the mod, can be set multiple times-->
-	<Dependency Id="" />
-	<!--Required DLC, can be set multiple times. Supported values are "Landmark Buildings", "San Fransisco Set", "Beach Properties", "Urban Promenades", "Modern Architecture"-->
-	<RequiredDLC Value="" />
-	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="" />
-	<!--<ChangeLog>
-	</ChangeLog>-->
-	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->
-	<ExternalLink Type="" Url="" />
-	<!--Supported values Public, Private, Unlisted-->
-	<AccessLevel Value="Public" />
+
+	<ModVersion Value="0.4.1" />
+	<GameVersion Value="1.6.*" />
+
+	<ChangeLog>
+		## Version 0.4.1
+
+		- Initial Release
+	</ChangeLog>
 </Publish>
+
