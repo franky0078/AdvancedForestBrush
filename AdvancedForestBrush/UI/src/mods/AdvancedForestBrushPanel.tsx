@@ -1,6 +1,7 @@
 import { bindValue, trigger, useValue } from "cs2/api";
 import { Portal } from "cs2/ui";
 import { useLocalization } from "cs2/l10n";
+import { toolbar } from "cs2/bindings";
 import classNames from "classnames";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -21,6 +22,18 @@ const circleBrushSize$ = bindValue<number>(mod.id, "CircleBrushSize");
 const rotation$ = bindValue<number>(mod.id, "Rotation");
 const polygonPointCount$ = bindValue<number>(mod.id, "PolygonPointCount");
 const polygonClosed$ = bindValue<boolean>(mod.id, "PolygonClosed");
+const selectedAges$ = bindValue<number>("Tree_Controller", "SelectedAges");
+
+const TREE_AGE = {
+    Sapling: 1,
+    Young: 2,
+    Mature: 4,
+    Elderly: 8,
+    Dead: 16,
+    Stump: 32
+} as const;
+const NATURAL_AGE_MASK =
+    TREE_AGE.Sapling | TREE_AGE.Young | TREE_AGE.Mature | TREE_AGE.Elderly;
 
 const fire = (name: string, ...args: any[]) => trigger(mod.id, name, ...args);
 
@@ -34,7 +47,13 @@ type GlyphName =
     | "natural"
     | "clusters"
     | "clearings"
-    | "edge";
+    | "edge"
+    | "preserveAge"
+    | "ageNatural"
+    | "sapling"
+    | "youngTree"
+    | "matureTree"
+    | "elderlyTree";
 
 const Glyph = ({ name }: { name: GlyphName }) => {
     const paths: Record<GlyphName, JSX.Element> = {
@@ -47,7 +66,13 @@ const Glyph = ({ name }: { name: GlyphName }) => {
         natural: <path d="M5 23c5-1 4-8 9-9 3-1 4 2 6 0 2-2 1-5 6-7-1 5 2 7 0 12-3 7-12 9-21 4Zm9-10c-2-5 1-9 5-11 0 5 3 7 0 11Z" />,
         clusters: <><circle cx="10" cy="11" r="5" /><circle cx="20" cy="9" r="4" /><circle cx="22" cy="21" r="6" /><circle cx="9" cy="23" r="3" /></>,
         clearings: <path fillRule="evenodd" d="M16 3a13 13 0 1 0 0 26 13 13 0 0 0 0-26Zm0 7a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z" />,
-        edge: <path d="M4 6h5v5H4V6Zm0 15h5v5H4v-5Zm8-8h5v5h-5v-5Zm7-7h5v5h-5V6Zm5 15h5v5h-5v-5Z" />
+        edge: <path d="M4 6h5v5H4V6Zm0 15h5v5H4v-5Zm8-8h5v5h-5v-5Zm7-7h5v5h-5V6Zm5 15h5v5h-5v-5Z" />,
+        preserveAge: <><rect x="6" y="6" width="7" height="20" rx="1.5" /><rect x="19" y="6" width="7" height="20" rx="1.5" /></>,
+        ageNatural: <><path d="M7 25h18M10 23l4-8h-3l5-10 5 10h-3l4 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /><circle cx="7" cy="9" r="2" /><circle cx="25" cy="12" r="2.5" /></>,
+        sapling: <path d="M16 27V15m0 2c-5 0-8-3-8-7 5 0 8 2 8 7Zm0 3c5 0 8-3 8-7-5 0-8 2-8 7Z" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />,
+        youngTree: <path d="M16 27v-7M8 21l5-8h-3l6-9 6 9h-3l5 8H8Z" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />,
+        matureTree: <path d="M14 27v-8M18 27v-8M7 18c-3-5 1-9 5-9 1-5 8-6 10-1 5 0 7 7 3 10H7Z" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />,
+        elderlyTree: <path d="M13 27l2-10m4 10-2-10M6 17c-3-6 2-10 7-9 2-6 10-5 11 1 5 2 4 8 1 9H7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
     };
 
     return <svg viewBox="0 0 32 32" aria-hidden="true">{paths[name]}</svg>;
@@ -126,6 +151,8 @@ export const AdvancedForestBrushPanel = () => {
     const noiseMode = useValue(noiseMode$);
     const noiseScale = useValue(noiseScale$);
     const noiseStrength = useValue(noiseStrength$);
+    const selectedAges = useValue(selectedAges$);
+    const preserveAge = useValue(toolbar.decorationMode$);
     const shape = useValue(shape$);
     const shapeWidth = useValue(shapeWidth$);
     const shapeLength = useValue(shapeLength$);
@@ -149,7 +176,7 @@ export const AdvancedForestBrushPanel = () => {
         rectangle: loc("Rectangle", "Rectangle"),
         rectangleTip: loc("RectangleTooltip", "Rectangular brush with separate width and length. Rotatable."),
         polygon: loc("Polygon", "Multipoint polygon"),
-        polygonTip: loc("PolygonTooltip", "Left-click to set points. Close the polygon by clicking the first point or double-clicking. The finished shape then follows the mouse pointer like a stamp."),
+        polygonTip: loc("PolygonTooltip", "Left-click to set points. Close the polygon by clicking the first point or double-clicking. Hold the right mouse button and move horizontally to rotate the finished polygon."),
         brushSize: loc("BrushSize", "Brush size"),
         size: loc("Size", "Size"),
         width: loc("Width", "Width"),
@@ -161,6 +188,19 @@ export const AdvancedForestBrushPanel = () => {
         noiseSizeTip: loc("NoiseSizeTooltip", "Controls the size of the noise pattern."),
         irregularity: loc("Irregularity", "Irregularity"),
         irregularityTip: loc("IrregularityTooltip", "Controls how strongly fine random details alter the base distribution."),
+        treeAge: loc("TreeAge", "Tree age"),
+        preserveAge: loc("PreserveAge", "Preserve age"),
+        preserveAgeTip: loc("PreserveAgeTooltip", "Prevents newly placed trees from continuing to age and grow."),
+        naturalAge: loc("NaturalAge", "Natural mix"),
+        naturalAgeTip: loc("NaturalAgeTooltip", "Natural mixture of saplings, young, mature and old trees."),
+        sapling: loc("Sapling", "Sapling"),
+        saplingTip: loc("SaplingTooltip", "Places trees in the sapling growth phase."),
+        youngTree: loc("YoungTree", "Young"),
+        youngTreeTip: loc("YoungTreeTooltip", "Places young trees."),
+        matureTree: loc("MatureTree", "Mature"),
+        matureTreeTip: loc("MatureTreeTooltip", "Places mature trees."),
+        elderlyTree: loc("ElderlyTree", "Old"),
+        elderlyTreeTip: loc("ElderlyTreeTooltip", "Places old trees."),
         minus: loc("Decrease", "Decrease value"),
         plus: loc("Increase", "Increase value"),
         polygonDrawing: loc("PolygonDrawing", "Drawing"),
@@ -215,10 +255,16 @@ export const AdvancedForestBrushPanel = () => {
         };
 
         find();
+        const observer = new MutationObserver(() => {
+            if (!mount.isConnected) find();
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
         const timer = window.setInterval(() => {
             if (!mount.isConnected) find();
-        }, 1000);
+        }, 250);
         return () => {
+            observer.disconnect();
             window.clearInterval(timer);
             fire("SetPointerOverUI", false);
             mount.remove();
@@ -361,6 +407,32 @@ export const AdvancedForestBrushPanel = () => {
     };
 
     const noiseGlyphs: GlyphName[] = ["uniform", "natural", "clusters", "clearings", "edge"];
+    const ageModes: Array<[GlyphName, number, string, string]> = [
+        ["sapling", TREE_AGE.Sapling, t.sapling, t.saplingTip],
+        ["youngTree", TREE_AGE.Young, t.youngTree, t.youngTreeTip],
+        ["matureTree", TREE_AGE.Mature, t.matureTree, t.matureTreeTip],
+        ["elderlyTree", TREE_AGE.Elderly, t.elderlyTree, t.elderlyTreeTip]
+    ];
+
+    const toggleTreeAge = (age: number) =>
+        trigger("Tree_Controller", "ChangeSelectedAge", age);
+
+    const selectNaturalAgeMix = () => {
+        const supportedAges = [
+            TREE_AGE.Sapling,
+            TREE_AGE.Young,
+            TREE_AGE.Mature,
+            TREE_AGE.Elderly,
+            TREE_AGE.Dead,
+            TREE_AGE.Stump
+        ];
+
+        for (const age of supportedAges) {
+            const selected = (selectedAges & age) === age;
+            const wanted = (NATURAL_AGE_MASK & age) === age;
+            if (selected !== wanted) toggleTreeAge(age);
+        }
+    };
 
     return (
         <Portal>
@@ -413,7 +485,8 @@ export const AdvancedForestBrushPanel = () => {
                             </>
                         )}
 
-                        {(shape === 1 || shape === 2) && (
+                        {(shape === 1 || shape === 2 ||
+                          (shape === 3 && polygonClosed)) && (
                             <NumberControl label={t.rotation} value={Math.round(rotation)} min={0} max={359} step={5} unit="°" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetRotation", value)} />
                         )}
 
@@ -427,6 +500,27 @@ export const AdvancedForestBrushPanel = () => {
                         )}
 
                         <NumberControl label={t.density} value={density} min={10} max={300} step={density < 100 ? 5 : 10} unit="%" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetDensity", value)} />
+
+                        <div className={styles.divider} />
+                        <div className={styles.distributionRow}>
+                            <div className={styles.settingLabel}>{t.treeAge}</div>
+                            <div className={styles.iconRow}>
+                                {tooltipButton("preserveAge", preserveAge, t.preserveAge, t.preserveAgeTip, () => {
+                                    toolbar.setDecorationMode(!preserveAge);
+                                    trigger("Tree_Controller", "PreserveAgeToggled", !preserveAge);
+                                })}
+                                {tooltipButton(
+                                    "ageNatural",
+                                    (selectedAges & 63) === NATURAL_AGE_MASK,
+                                    t.naturalAge,
+                                    t.naturalAgeTip,
+                                    selectNaturalAgeMix
+                                )}
+                                {ageModes.map(([glyph, age, title, description]) =>
+                                    tooltipButton(glyph, (selectedAges & age) === age, title, description, () => toggleTreeAge(age))
+                                )}
+                            </div>
+                        </div>
 
                         <div className={styles.divider} />
                         <div className={styles.distributionRow}>

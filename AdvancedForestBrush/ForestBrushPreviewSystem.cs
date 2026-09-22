@@ -91,9 +91,7 @@ namespace AdvancedForestBrush
                     EntityManager.SetComponentData(entity, brush);
                 }
 
-                // BrushRenderSystem explicitly excludes Hidden entities. This
-                // is more reliable than opacity alone because its render
-                // callback can run before our own callback.
+                // BrushRenderSystem explicitly excludes Hidden entities
                 if (!EntityManager.HasComponent<Hidden>(entity))
                 {
                     EntityManager.AddComponent<Hidden>(entity);
@@ -178,7 +176,7 @@ namespace AdvancedForestBrush
             {
                 width = ForestBrushState.PolygonHalfWidth * 2f;
                 length = ForestBrushState.PolygonHalfLength * 2f;
-                rotation = 0f;
+                rotation = ForestBrushState.RotationDegrees;
                 texture = m_PolygonTexture;
             }
             else

@@ -96,12 +96,7 @@ namespace AdvancedForestBrush
                  ForestBrushState.Shape == ForestBrushShape.Rectangle) &&
                 m_SecondaryAction.ReadValue<float>() >= 0.5f)
             {
-                Vector2 delta = m_PointerDeltaAction.ReadValue<Vector2>();
-                if (math.abs(delta.x) > 0.01f)
-                {
-                    ForestBrushState.SetRotation(
-                        ForestBrushState.RotationDegrees + delta.x * 0.35f);
-                }
+                RotateFromPointerDelta();
             }
         }
 
@@ -114,13 +109,18 @@ namespace AdvancedForestBrush
                 return;
             }
 
-            if (m_SecondaryAction.WasPressedThisFrame())
+            if (ForestBrushState.PolygonClosed)
             {
-                if (ForestBrushState.PolygonClosed)
+                if (m_SecondaryAction.ReadValue<float>() >= 0.5f)
                 {
-                    ForestBrushState.ReopenPolygonAtCursor();
+                    RotateFromPointerDelta();
                 }
 
+                return;
+            }
+
+            if (m_SecondaryAction.WasPressedThisFrame())
+            {
                 int count = ForestBrushState.PolygonPoints.Count;
                 if (count > 0)
                 {
@@ -131,8 +131,7 @@ namespace AdvancedForestBrush
                 return;
             }
 
-            if (ForestBrushState.PolygonClosed ||
-                !m_ApplyAction.WasPressedThisFrame())
+            if (!m_ApplyAction.WasPressedThisFrame())
             {
                 return;
             }
@@ -177,6 +176,16 @@ namespace AdvancedForestBrush
             ForestBrushState.SuppressPolygonPlacement = true;
             m_LastClickTime = UnityEngine.Time.unscaledTime;
             m_LastClickPosition = position;
+        }
+
+        private void RotateFromPointerDelta()
+        {
+            Vector2 delta = m_PointerDeltaAction.ReadValue<Vector2>();
+            if (math.abs(delta.x) > 0.01f)
+            {
+                ForestBrushState.SetRotation(
+                    ForestBrushState.RotationDegrees + delta.x * 0.35f);
+            }
         }
 
         private static bool IsValidPolygon()

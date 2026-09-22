@@ -162,18 +162,6 @@ namespace AdvancedForestBrush
         {
             float2 point = new float2(worldPosition.x, worldPosition.z);
 
-            if (Shape == ForestBrushShape.Polygon)
-            {
-                if (!PolygonClosed)
-                {
-                    return false;
-                }
-
-                float2 localPoint =
-                    point - new float2(shapeCenter.x, shapeCenter.z);
-                return IsPointInsideLocalPolygon(localPoint);
-            }
-
             if (Shape == ForestBrushShape.Circle)
             {
                 return true;
@@ -186,6 +174,16 @@ namespace AdvancedForestBrush
             float2 local = new float2(
                 offset.x * cosine - offset.y * sine,
                 offset.x * sine + offset.y * cosine);
+
+            if (Shape == ForestBrushShape.Polygon)
+            {
+                if (!PolygonClosed)
+                {
+                    return false;
+                }
+
+                return IsPointInsideLocalPolygon(local);
+            }
 
             float halfWidth = ShapeWidth * 0.5f;
             float halfLength = Shape == ForestBrushShape.Square
