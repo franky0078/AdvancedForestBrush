@@ -305,7 +305,7 @@ export const AdvancedForestBrushPanel = () => {
 
         const hiddenRows = new Map<HTMLElement, string>();
         const normalizeLabel = (value: string) =>
-            value.trim().replace(/\\s+/g, " ").toLocaleLowerCase();
+            value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
         const externalBrushLabels = new Set([
             "Pinselgröße",
             "Pinselstärke",
