@@ -11,7 +11,7 @@ namespace AdvancedForestBrush
     public sealed class Mod : IMod
     {
         public const string Id = "AdvancedForestBrush";
-        public const string ModVersion = "0.4.1";
+        public const string ModVersion = "0.5.0";
         internal static ILog Log { get; private set; }
         public static Setting Settings { get; private set; }
 
@@ -25,6 +25,9 @@ namespace AdvancedForestBrush
 
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(Settings));
             GameManager.instance.localizationManager.AddSource("de-DE", new LocaleDE(Settings));
+            GameManager.instance.localizationManager.AddSource("es-ES", new LocaleES(Settings));
+            GameManager.instance.localizationManager.AddSource("it-IT", new LocaleIT(Settings));
+            GameManager.instance.localizationManager.AddSource("fr-FR", new LocaleFR(Settings));
 
             AssetDatabase.global.LoadSettings(
                 nameof(AdvancedForestBrush),
@@ -55,3 +58,4 @@ namespace AdvancedForestBrush
         }
     }
 }
+

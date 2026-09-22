@@ -162,6 +162,8 @@ export const AdvancedForestBrushPanel = () => {
     const polygonClosed = useValue(polygonClosed$);
     const loc = (key: string, fallback: string) =>
         translate(`AdvancedForestBrush.UI.${key}`, fallback) ?? fallback;
+    const toolModeTitle =
+        translate("Toolbar.TOOL_MODE_TITLE", "Tool Mode") ?? "Tool Mode";
 
     const t = {
         title: loc("Title", "Advanced Forest Brush"),
@@ -226,19 +228,17 @@ export const AdvancedForestBrushPanel = () => {
         const find = () => {
             const labels = Array.from(document.querySelectorAll("div,span")) as HTMLElement[];
             const candidates = labels.filter(element => {
-                if (!["Werkzeugmodus", "Tool Mode"].includes(element.textContent?.trim() || "")) {
+                const text = element.textContent?.trim() || "";
+                if (text !== toolModeTitle &&
+                    !["Werkzeugmodus", "Tool Mode"].includes(text)) {
                     return false;
                 }
 
                 const rect = element.getBoundingClientRect();
                 if (rect.width <= 0 || rect.height <= 0) return false;
 
-                let current: HTMLElement | null = element.parentElement;
-                for (let depth = 0; current && depth < 7; depth++, current = current.parentElement) {
-                    const text = current.textContent || "";
-                    if (text.includes("Anarchy") && text.includes("Sets")) return true;
-                }
-                return false;
+                const row = element.parentElement;
+                return (row?.querySelectorAll("button").length ?? 0) >= 4;
             });
 
             const label = candidates.sort((a, b) =>
@@ -248,8 +248,12 @@ export const AdvancedForestBrushPanel = () => {
             if (!row) return;
             const rest = Array.from(row.children).filter(element => element !== label) as HTMLElement[];
             const controls = rest.find(element => element.querySelector("button")) || rest[0];
-            if (mount.parentElement !== row) {
-                controls ? row.insertBefore(mount, controls) : row.appendChild(mount);
+            if (controls) {
+                if (mount.parentElement !== controls) {
+                    controls.appendChild(mount);
+                }
+            } else if (mount.parentElement !== row) {
+                row.appendChild(mount);
             }
             setTarget(mount);
         };
@@ -269,7 +273,7 @@ export const AdvancedForestBrushPanel = () => {
             fire("SetPointerOverUI", false);
             mount.remove();
         };
-    }, []);
+    }, [toolModeTitle]);
 
     const rememberTreeControllerPosition = () => {
         let current = target?.parentElement || null;
@@ -280,7 +284,9 @@ export const AdvancedForestBrushPanel = () => {
             const text = current.textContent || "";
             if (rect.width >= 260 && rect.width <= 700 &&
                 rect.height >= 180 &&
-                (text.includes("Werkzeugmodus") || text.includes("Tool Mode"))) {
+                (text.includes(toolModeTitle) ||
+                 text.includes("Werkzeugmodus") ||
+                 text.includes("Tool Mode"))) {
                 candidate = current;
             }
             current = current.parentElement;

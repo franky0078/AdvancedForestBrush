@@ -3,5 +3,6 @@
   "name": "Advanced Forest Brush",
   "author": "Frank",
   "version": "0.4.1",
-  "dependencies": ["Tree Controller"]
+  "dependencies": ["Tree_Controller"]
 }
+
