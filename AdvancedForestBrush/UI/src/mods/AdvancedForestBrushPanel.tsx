@@ -304,12 +304,23 @@ export const AdvancedForestBrushPanel = () => {
         if (!panelVisible) return;
 
         const hiddenRows = new Map<HTMLElement, string>();
+        const normalizeLabel = (value: string) =>
+            value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
         const externalBrushLabels = new Set([
             "Pinselgröße",
             "Pinselstärke",
             "Brush Size",
-            "Brush Strength"
-        ]);
+            "Brush Strength",
+            "Tamaño de pincel",
+            "Tamaño del pincel",
+            "Fuerza de pincel",
+            "Fuerza del pincel",
+            "Taille du pinceau",
+            "Force du pinceau",
+            "Dimensione pennello",
+            "Robustezza pennello",
+            "Forza pennello"
+        ].map(normalizeLabel));
 
         const hideExternalBrushRows = () => {
             const ownPanel = panelRef.current;
@@ -319,7 +330,9 @@ export const AdvancedForestBrushPanel = () => {
 
             for (const element of elements) {
                 if (ownPanel?.contains(element) ||
-                    !externalBrushLabels.has(element.textContent?.trim() || "")) {
+                    !externalBrushLabels.has(
+                        normalizeLabel(element.textContent || "")
+                    )) {
                     continue;
                 }
 
@@ -550,3 +563,4 @@ export const AdvancedForestBrushPanel = () => {
         </Portal>
     );
 };
+
