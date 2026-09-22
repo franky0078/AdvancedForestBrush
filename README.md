@@ -70,7 +70,7 @@ For a polygon:
 
 ## Compatibility
 
-Advanced Forest Brush works with the normal vegetation placement tool and integrates with Tree Controller for tree-age selection.
+Advanced Forest Brush works with the normal vegetation placement tool and integrates with [Tree Controller](https://github.com/yenyang/Tree_Controller) by yenyang for tree-age selection.
 
 ## Language support
 
