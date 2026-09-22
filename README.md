@@ -4,7 +4,7 @@ Advanced Forest Brush expands vegetation placement in Cities: Skylines II
 
 
 <p align="center">
-  <img src="AdvancedForestBrush/Properties/Thumbnail.jpg"
+  <img src="AdvancedForestBrush/Properties/Screenshot01.jpg"
        alt="Advanced Forest Brush"
        width="600">
 </p>
