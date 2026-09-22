@@ -5,10 +5,57 @@ namespace AdvancedForestBrush.Localization
 {
     public sealed class LocaleDE : IDictionarySource
     {
+        private readonly Setting m_Setting;
+
+        public LocaleDE(Setting setting)
+        {
+            m_Setting = setting;
+        }
+
         public IEnumerable<KeyValuePair<string, string>> ReadEntries(IList<IDictionaryEntryError> errors, Dictionary<string, int> indexCounts)
         {
             return new Dictionary<string, string>
             {
+                { m_Setting.GetSettingsLocaleID(), "Advanced Forest Brush" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kSection), "Allgemein" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kDefaultsGroup), "Standardwerte" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup), "Informationen" },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DefaultShape)), "Standardform" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultShape)), "Form, die beim Laden von Advanced Forest Brush ausgewählt wird." },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTBRUSHSHAPE[Circle]", "Kreis" },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTBRUSHSHAPE[Square]", "Quadrat" },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTBRUSHSHAPE[Rectangle]", "Rechteck" },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTBRUSHSHAPE[Polygon]", "Multipoint-Polygon" },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DefaultCircleBrushSize)), "Standard-Kreisgröße (m)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultCircleBrushSize)), "Anfängliche Größe des Kreispinsels in Metern." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DefaultShapeWidth)), "Standardbreite der Form (m)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultShapeWidth)), "Anfängliche Breite von Quadrat und Rechteck in Metern." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DefaultRectangleLength)), "Standardlänge des Rechtecks (m)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultRectangleLength)), "Anfängliche Länge des Rechtecks in Metern." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DefaultRotation)), "Standarddrehung (°)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultRotation)), "Anfängliche Drehung von Quadrat und Rechteck." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DefaultDensity)), "Standarddichte (%)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultDensity)), "Anfängliche Platzierungsdichte von 10 bis 300 Prozent." },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DefaultNoiseMode)), "Standardverteilung" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultNoiseMode)), "Verteilung, die beim Laden von Advanced Forest Brush ausgewählt wird." },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTNOISEMODE[Uniform]", "Gleichmäßig" },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTNOISEMODE[Natural]", "Natürlich" },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTNOISEMODE[Clusters]", "Gruppen" },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTNOISEMODE[Clearings]", "Lichtungen" },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTNOISEMODE[Edge]", "Waldrand" },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DefaultNoiseScale)), "Standard-Noise-Größe (m)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultNoiseScale)), "Anfängliche Größe des Verteilungsmusters." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DefaultNoiseStrength)), "Standard-Unregelmäßigkeit (%)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultNoiseStrength)), "Anfängliche Stärke der feinen Zufallsabweichungen." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ResetToDefaults)), "Standardwerte zurücksetzen" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ResetToDefaults)), "Setzt alle Standardwerte von Advanced Forest Brush zurück." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.Version)), "Version" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.Version)), "Zeigt die aktuell installierte Version an." },
+
                 { "AdvancedForestBrush.UI.Title", "Advanced Forest Brush" },
                 { "AdvancedForestBrush.UI.Open", "Advanced Forest Brush öffnen" },
                 { "AdvancedForestBrush.UI.Close", "Advanced Forest Brush schließen" },

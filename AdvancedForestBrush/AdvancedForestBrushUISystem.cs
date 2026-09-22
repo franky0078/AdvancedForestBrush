@@ -127,7 +127,6 @@ namespace AdvancedForestBrush
             m_PreviousBrushStrength = m_ObjectToolSystem.brushStrength;
             m_OwnsObjectToolState = true;
 
-            ForestBrushState.CircleBrushSize = m_PreviousBrushSize;
             m_ToolSystem.selected = Entity.Null;
             m_ObjectToolSystem.mode = ObjectToolSystem.Mode.Brush;
             m_ToolSystem.activeTool = m_ObjectToolSystem;

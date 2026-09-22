@@ -55,7 +55,6 @@ namespace AdvancedForestBrush
         {
             bool customPreview =
                 ForestBrushState.PanelVisible &&
-                ForestBrushState.HasValidCursor &&
                 ForestBrushState.Shape != ForestBrushShape.Circle;
 
             if (!customPreview)

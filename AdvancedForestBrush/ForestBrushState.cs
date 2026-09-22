@@ -155,17 +155,22 @@ namespace AdvancedForestBrush
 
         public static bool Contains(float3 worldPosition)
         {
+            return HasValidCursor && Contains(worldPosition, CursorPosition);
+        }
+
+        public static bool Contains(float3 worldPosition, float3 shapeCenter)
+        {
             float2 point = new float2(worldPosition.x, worldPosition.z);
 
             if (Shape == ForestBrushShape.Polygon)
             {
-                if (!PolygonClosed || !HasValidCursor)
+                if (!PolygonClosed)
                 {
                     return false;
                 }
 
                 float2 localPoint =
-                    point - new float2(CursorPosition.x, CursorPosition.z);
+                    point - new float2(shapeCenter.x, shapeCenter.z);
                 return IsPointInsideLocalPolygon(localPoint);
             }
 
@@ -174,12 +179,7 @@ namespace AdvancedForestBrush
                 return true;
             }
 
-            if (!HasValidCursor)
-            {
-                return false;
-            }
-
-            float2 offset = point - new float2(CursorPosition.x, CursorPosition.z);
+            float2 offset = point - new float2(shapeCenter.x, shapeCenter.z);
             float radians = math.radians(-RotationDegrees);
             float sine = math.sin(radians);
             float cosine = math.cos(radians);
