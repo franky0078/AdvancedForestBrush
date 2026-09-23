@@ -2,9 +2,11 @@
 
 Advanced Forest Brush expands vegetation placement in Cities: Skylines II
 
+
 ## Required dependency
 
 Tree Controller by yenyang (Paradox Mods ID 75993) is required. Advanced Forest Brush uses its toolbar and tree-age selection.
+
 
 ## Brush shapes
 
@@ -25,15 +27,7 @@ Tree Controller by yenyang (Paradox Mods ID 75993) is required. Advanced Forest 
 
 ## Tree ages
 
-Advanced Forest Brush uses the Tree Controller age selection and supports:
-
-- Natural age mixture
-- Saplings
-- Young trees
-- Mature trees
-- Old trees
-- Multiple selected age groups
-- Preserve age
+Advanced Forest Brush uses the Tree Controller age selection
 
 
 ## Features

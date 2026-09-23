@@ -9,6 +9,7 @@ Advanced Forest Brush expands vegetation placement in Cities: Skylines II
        width="600">
 </p>
 
+
 ## Brush shapes
 
 - Circle with adjustable brush size
@@ -27,17 +28,11 @@ Advanced Forest Brush expands vegetation placement in Cities: Skylines II
 
 Noise size and irregularity can be adjusted for all non-uniform distribution modes. Brush density can be set from 10% to 300%.
 
+
 ## Tree ages
 
-Advanced Forest Brush uses the Tree Controller age selection and supports:
+Advanced Forest Brush uses the Tree Controller age selection
 
-- Natural age mixture
-- Saplings
-- Young trees
-- Mature trees
-- Old trees
-- Multiple selected age groups
-- Preserve age
 
 ## Features
 
@@ -47,6 +42,7 @@ Advanced Forest Brush uses the Tree Controller age selection and supports:
 - Species Grouping – Places selected tree species in natural-looking patches
 - Support for the game and editor
 - English, German, Spanish, Italian, French localization
+
 
 ## How to use
 
@@ -67,6 +63,7 @@ For a polygon:
 6. Left-click to place vegetation inside the polygon.
 7. Press Esc or use **Reset polygon** to start a new polygon.
 
+
 ## Compatibility
 
 Advanced Forest Brush works with the normal vegetation placement tool and integrates with [Tree Controller](https://github.com/yenyang/Tree_Controller) by yenyang for tree-age selection.
@@ -85,7 +82,9 @@ When reporting a problem, please include:
 
 Some parts of the code and user interface were created with AI assistance. AI is also used for debugging and troubleshooting.
 
+
 ## Changes
+
 
 ### Version 0.7.0
 
