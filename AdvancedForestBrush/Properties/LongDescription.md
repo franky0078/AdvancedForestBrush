@@ -50,7 +50,7 @@ Advanced Forest Brush uses the Tree Controller age selection and supports:
 Open the vegetation tool, select an asset and open Advanced Forest Brush.
 Select a shape, configure the desired distribution and tree ages, then place vegetation with the left mouse button.
 For polygons, left-click to add points and click the first point or double-click to close the polygon.
-Hold the right mouse button and move horizontally to rotate the completed polygon.
+Hold ctrl + right mouse button and move horizontally to rotate the completed polygon.
 Press Esc or use Reset polygon to start again.
 
 

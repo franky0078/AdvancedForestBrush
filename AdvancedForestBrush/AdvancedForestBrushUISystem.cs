@@ -5,7 +5,6 @@ using Game.Tools;
 using Game.UI;
 using Unity.Entities;
 using Unity.Mathematics;
-using UnityEngine.InputSystem;
 
 namespace AdvancedForestBrush
 {
@@ -77,6 +76,8 @@ namespace AdvancedForestBrush
                 return;
             }
 
+            ForestBrushInput.Activate();
+
             if (ForestBrushState.Shape == ForestBrushShape.Circle)
             {
                 m_ObjectToolSystem.brushSize =
@@ -104,10 +105,7 @@ namespace AdvancedForestBrush
                  ForestBrushState.Shape == ForestBrushShape.Rectangle ||
                  (ForestBrushState.Shape == ForestBrushShape.Polygon &&
                   ForestBrushState.PolygonClosed)) &&
-                Keyboard.current != null && Mouse.current != null &&
-                (Keyboard.current.leftCtrlKey.isPressed ||
-                 Keyboard.current.rightCtrlKey.isPressed) &&
-                Mouse.current.rightButton.isPressed;
+                ForestBrushInput.IsRotating;
 
             m_ObjectToolSystem.brushStrength = polygonReady && !rotating
                 ? ForestBrushState.DensityPercent / 100f
@@ -143,6 +141,7 @@ namespace AdvancedForestBrush
             m_ToolSystem.selected = Entity.Null;
             m_ObjectToolSystem.mode = ObjectToolSystem.Mode.Brush;
             m_ToolSystem.activeTool = m_ObjectToolSystem;
+            ForestBrushInput.Activate();
         }
 
         private void ClosePanel(bool restorePreviousTool)
@@ -150,6 +149,7 @@ namespace AdvancedForestBrush
             ForestBrushState.PanelVisible = false;
             ForestBrushState.PointerOverUI = false;
             ForestBrushState.HasValidCursor = false;
+            ForestBrushInput.Deactivate();
 
             if (!m_OwnsObjectToolState)
             {

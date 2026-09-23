@@ -91,7 +91,7 @@ namespace AdvancedForestBrush
                 IsRotationGesture())
             {
                 // ObjectTool runs later in ToolUpdate; keep its brush from
-                // erasing vegetation during Ctrl + right-drag rotation.
+                // erasing vegetation while rotating.
                 m_ObjectToolSystem.brushStrength = 0f;
                 RotateFromPointerDelta();
             }
@@ -117,8 +117,8 @@ namespace AdvancedForestBrush
                 return;
             }
 
-            // Backspace undoes the last point. Right click is reserved for
-            // the game's normal vegetation erase action.
+            // Backspace undoes the last point. The configured erase action
+            // belongs to the game's vegetation brush.
             if (Keyboard.current != null &&
                 Keyboard.current.backspaceKey.wasPressedThisFrame)
             {
@@ -181,10 +181,7 @@ namespace AdvancedForestBrush
 
         private static bool IsRotationGesture()
         {
-            return Keyboard.current != null && Mouse.current != null &&
-                (Keyboard.current.leftCtrlKey.isPressed ||
-                 Keyboard.current.rightCtrlKey.isPressed) &&
-                Mouse.current.rightButton.isPressed;
+            return ForestBrushInput.IsRotating;
         }
 
         private void RotateFromPointerDelta()

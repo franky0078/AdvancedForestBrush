@@ -11,7 +11,7 @@ namespace AdvancedForestBrush
     public sealed class Mod : IMod
     {
         public const string Id = "AdvancedForestBrush";
-        public const string ModVersion = "0.6.0";
+        public const string ModVersion = "0.5.1";
         internal static ILog Log { get; private set; }
         public static Setting Settings { get; private set; }
 
@@ -21,6 +21,7 @@ namespace AdvancedForestBrush
             Log.Info($"Advanced Forest Brush {ModVersion} loading");
 
             Settings = new Setting(this);
+            Settings.RegisterKeyBindings();
             Settings.RegisterInOptionsUI();
 
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(Settings));
@@ -35,7 +36,7 @@ namespace AdvancedForestBrush
                 new Setting(this));
 
             Settings.ApplyToState();
-            // Suppress the ObjectTool brush before it processes Ctrl + right-drag.
+            // Suppress the ObjectTool brush before it processes a rotation drag.
             updateSystem.UpdateBefore<ForestBrushShapeSystem, ObjectToolSystem>(
                 SystemUpdatePhase.ToolUpdate);
             // ObjectTool writes the vanilla Brush component during ToolUpdate.
@@ -45,12 +46,14 @@ namespace AdvancedForestBrush
                 SystemUpdatePhase.ToolUpdate);
             updateSystem.UpdateAt<ForestBrushOverlaySystem>(SystemUpdatePhase.ToolUpdate);
             updateSystem.UpdateAt<AdvancedForestBrushUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<ForestBrushTooltipSystem>(SystemUpdatePhase.UITooltip);
             updateSystem.UpdateBefore<ForestPlacementFilterSystem>(SystemUpdatePhase.Modification1);
         }
 
         public void OnDispose()
         {
             Log?.Info("Advanced Forest Brush disposed");
+            ForestBrushInput.Deactivate();
 
             if (Settings != null)
             {

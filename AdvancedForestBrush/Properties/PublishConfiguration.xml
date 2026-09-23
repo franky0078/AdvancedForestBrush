@@ -59,7 +59,7 @@
 		Open the vegetation tool, select an asset and open Advanced Forest Brush.
 		Select a shape, configure the desired distribution and tree ages, then place vegetation with the left mouse button.
 		For polygons, left-click to add points and click the first point or double-click to close the polygon.
-		Hold the right mouse button and move horizontally to rotate the completed polygon.
+		Hold ctrl + right mouse button and move horizontally to rotate the completed polygon.
 		Press Esc or use Reset polygon to start again.
 
 
@@ -90,11 +90,11 @@
 	<!-- Thumbnail -->
 	<Thumbnail Value="Properties/Thumbnail.jpg" />
 	<Screenshot Value="Properties/Screenshot01.jpg" />
-	<!--<Screenshot Value="Properties/Screenshot02.jpg" />
+	<Screenshot Value="Properties/Screenshot02.jpg" />
 	<Screenshot Value="Properties/Screenshot03.jpg" />
 	<Screenshot Value="Properties/Screenshot04.jpg" />
 	<Screenshot Value="Properties/Screenshot05.jpg" />
-	<Screenshot Value="Properties/Screenshot06.jpg" />
+	<!--<Screenshot Value="Properties/Screenshot06.jpg" />
 	<Screenshot Value="Properties/Screenshot07.jpg" />
 	<Screenshot Value="Properties/Screenshot08.jpg" />
 	<Screenshot Value="Properties/Screenshot09.jpg" /> -->
@@ -104,14 +104,14 @@
 
 	<ForumLink Value="" />
 
-	<ModVersion Value="0.6.0" />
+	<ModVersion Value="0.7.0" />
 	<GameVersion Value="1.6.*" />
 
 	<!-- Required dependency: Tree Controller by yenyang -->
 	<Dependency Id="75993" DisplayName="Tree Controller" />
 
 	<ChangeLog>
-		## Version 0.6.0
+		## Version 0.7.0
 
 		- Initial Release
 	</ChangeLog>

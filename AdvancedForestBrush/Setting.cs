@@ -1,18 +1,49 @@
 using Colossal.IO.AssetDatabase;
 using Game.Modding;
+using Game.Input;
 using Game.Settings;
 using Unity.Mathematics;
 
 namespace AdvancedForestBrush
 {
     [FileLocation(nameof(AdvancedForestBrush))]
-    [SettingsUIGroupOrder(kDefaultsGroup, kAboutGroup)]
-    [SettingsUIShowGroupName(kDefaultsGroup, kAboutGroup)]
+    [SettingsUITabOrder(kSection, kControlsSection)]
+    [SettingsUIGroupOrder(kDefaultsGroup, kControlsGroup, kAboutGroup)]
+    [SettingsUIShowGroupName(kDefaultsGroup, kControlsGroup, kAboutGroup)]
+    [SettingsUIMouseAction(kRotateAction, ActionType.Button,
+        SettingsUIInputActionAttribute.kDefaultRebindOptions,
+        ModifierOptions.Allow, true, usages: new[] { Usages.kToolUsage })]
+    [SettingsUIKeyboardAction(kRotateAction, ActionType.Button,
+        SettingsUIInputActionAttribute.kDefaultRebindOptions,
+        ModifierOptions.Allow, true, usages: new[] { Usages.kToolUsage })]
     public sealed class Setting : ModSetting
     {
         public const string kSection = "Main";
+        public const string kControlsSection = "Controls";
         public const string kDefaultsGroup = "Defaults";
+        public const string kControlsGroup = "Bindings";
         public const string kAboutGroup = "About";
+        public const string kRotateAction = "RotateBrush";
+
+        [SettingsUISection(kControlsSection, kControlsGroup)]
+        [SettingsUIMouseBinding(BindingMouse.Right, kRotateAction, ctrl: true)]
+        public ProxyBinding RotateMouse { get; set; }
+
+        [SettingsUISection(kControlsSection, kControlsGroup)]
+        [SettingsUIKeyboardBinding(BindingKeyboard.None, kRotateAction)]
+        public ProxyBinding RotateKeyboard { get; set; }
+
+        [SettingsUISection(kControlsSection, kControlsGroup)]
+        public bool ResetBindings
+        {
+            set
+            {
+                if (value)
+                {
+                    ResetKeyBindings();
+                }
+            }
+        }
 
         private ForestBrushShape m_DefaultShape;
         private int m_DefaultCircleBrushSize;

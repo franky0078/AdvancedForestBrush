@@ -42,11 +42,11 @@ Advanced Forest Brush uses the Tree Controller age selection and supports:
 ## Features
 
 
-- Adjustable density from 10% to 300%
 - Configurable noise size and irregularity
 - Movable and rotatable completed polygons
+- Species Grouping – Places selected tree species in natural-looking patches
 - Support for the game and editor
-- English and German localization
+- English, German, Spanish, Italian, French localization
 
 ## How to use
 
@@ -63,7 +63,7 @@ For a polygon:
 2. Left-click to place each corner point.
 3. Click the first point or double-click to close the polygon.
 4. Move the completed polygon to the desired position.
-5. Hold the right mouse button and move the mouse horizontally to rotate it.
+5. Hold ctrl + right mouse button and move horizontally to rotate the completed polygon.
 6. Left-click to place vegetation inside the polygon.
 7. Press Esc or use **Reset polygon** to start a new polygon.
 
@@ -71,10 +71,6 @@ For a polygon:
 
 Advanced Forest Brush works with the normal vegetation placement tool and integrates with [Tree Controller](https://github.com/yenyang/Tree_Controller) by yenyang for tree-age selection.
 
-## Language support
-
-- English
-- German
 
 ## Bug reports
 
@@ -91,7 +87,7 @@ Some parts of the code and user interface were created with AI assistance. AI is
 
 ## Changes
 
-### Version 0.4.1
+### Version 0.7.0
 
 - Initial Release
 
