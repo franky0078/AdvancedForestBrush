@@ -108,6 +108,12 @@
 
 		- Initial Release
 	</ChangeLog>
+
+	<!--Optional external links for your own mod.-->
+	<ExternalLink Type="github" Url="https://github.com/franky0078/AdvancedForestBrush" />
+
+	<!-- Supported values: Public, Private, Unlisted -->
+	<AccessLevel Value="Public" />
 </Publish>
 
 
