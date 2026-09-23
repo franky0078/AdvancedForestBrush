@@ -90,8 +90,6 @@ namespace AdvancedForestBrush
                  ForestBrushState.Shape == ForestBrushShape.Rectangle) &&
                 IsRotationGesture())
             {
-                // ObjectTool runs later in ToolUpdate; keep its brush from
-                // erasing vegetation while rotating.
                 m_ObjectToolSystem.brushStrength = 0f;
                 RotateFromPointerDelta();
             }

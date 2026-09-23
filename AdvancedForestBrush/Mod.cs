@@ -39,9 +39,6 @@ namespace AdvancedForestBrush
             // Suppress the ObjectTool brush before it processes a rotation drag.
             updateSystem.UpdateBefore<ForestBrushShapeSystem, ObjectToolSystem>(
                 SystemUpdatePhase.ToolUpdate);
-            // ObjectTool writes the vanilla Brush component during ToolUpdate.
-            // Run afterwards so the circular preview cannot reappear on top of
-            // the square, rectangle or polygon preview.
             updateSystem.UpdateAfter<ForestBrushPreviewSystem, ObjectToolSystem>(
                 SystemUpdatePhase.ToolUpdate);
             updateSystem.UpdateAt<ForestBrushOverlaySystem>(SystemUpdatePhase.ToolUpdate);

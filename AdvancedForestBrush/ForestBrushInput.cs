@@ -2,8 +2,6 @@ using Game.Input;
 
 namespace AdvancedForestBrush
 {
-    // The game's vegetation brush (including Tree Controller) owns erasing.
-    // We only enable our configurable rotation action while the panel is active.
     internal static class ForestBrushInput
     {
         private static ProxyAction s_RotateAction;

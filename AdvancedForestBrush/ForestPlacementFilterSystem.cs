@@ -115,8 +115,6 @@ namespace AdvancedForestBrush
             }
         }
 
-        // Each prefab gets a stable, smooth map in world coordinates. Tree Controller
-        // continues to choose the prefab and age; we only favour its own patches.
         // Filtering rather than replacing the prefab preserves its selected mix.
         private static bool KeepSpecies(float3 position, Entity prefab, int randomSeed)
         {

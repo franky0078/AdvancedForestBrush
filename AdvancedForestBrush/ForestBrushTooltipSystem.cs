@@ -41,10 +41,6 @@ namespace AdvancedForestBrush
                 {
                     return;
                 }
-
-                // Refresh() only rebuilds the game's cached hint when its label changes.
-                // A rebind keeps the same ProxyAction and label, so compare the actual
-                // binding paths and modifiers and replace the widget when they change.
                 string bindings = action.ToString();
                 if (m_RotateHint == null || m_RotateAction != action ||
                     m_RotateBindings != bindings)
