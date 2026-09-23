@@ -97,16 +97,16 @@
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="0.7.0" />
+	<ModVersion Value="0.7.1" />
 	<GameVersion Value="1.6.*" />
 
 	<!-- Required dependency: Tree Controller by yenyang -->
 	<Dependency Id="75993" DisplayName="Tree Controller" />
 
 	<ChangeLog>
-		## Version 0.7.0
+		## Version 0.7.1
 
-		- Initial Release
+		- App Button bugfix
 	</ChangeLog>
 
 	<!--Optional external links for your own mod.-->

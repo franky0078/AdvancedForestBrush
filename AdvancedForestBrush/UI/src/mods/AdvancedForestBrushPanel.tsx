@@ -252,6 +252,8 @@ export const AdvancedForestBrushPanel = () => {
     const panelRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
+        if (!visible) return;
+
         const mount = document.createElement("span");
         mount.className = styles.launcherMount;
         const find = () => {
@@ -302,7 +304,7 @@ export const AdvancedForestBrushPanel = () => {
             fire("SetPointerOverUI", false);
             mount.remove();
         };
-    }, [toolModeTitle]);
+    }, [toolModeTitle, visible]);
 
     const rememberTreeControllerPosition = () => {
         let current = target?.parentElement || null;
@@ -314,8 +316,8 @@ export const AdvancedForestBrushPanel = () => {
             if (rect.width >= 260 && rect.width <= 700 &&
                 rect.height >= 180 &&
                 (text.includes(toolModeTitle) ||
-                 text.includes("Werkzeugmodus") ||
-                 text.includes("Tool Mode"))) {
+                    text.includes("Werkzeugmodus") ||
+                    text.includes("Tool Mode"))) {
                 candidate = current;
             }
             current = current.parentElement;
@@ -385,7 +387,7 @@ export const AdvancedForestBrushPanel = () => {
         };
     }, [panelVisible]);
 
-    if (!visible && !target) return null;
+    if (!visible) return null;
 
     const resolver = VanillaComponentResolver.instance;
     const Tooltip = resolver.Tooltip;
@@ -534,9 +536,9 @@ export const AdvancedForestBrushPanel = () => {
                         )}
 
                         {(shape === 1 || shape === 2 ||
-                          (shape === 3 && polygonClosed)) && (
-                            <NumberControl label={t.rotation} value={Math.round(rotation)} min={0} max={359} step={5} unit="°" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetRotation", value)} />
-                        )}
+                            (shape === 3 && polygonClosed)) && (
+                                <NumberControl label={t.rotation} value={Math.round(rotation)} min={0} max={359} step={5} unit="°" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetRotation", value)} />
+                            )}
 
                         {shape === 3 && (
                             <div className={styles.polygonStatus}>

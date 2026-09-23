@@ -86,9 +86,9 @@ Some parts of the code and user interface were created with AI assistance. AI is
 ## Changes
 
 
-### Version 0.7.0
+### Version 0.7.1
 
-- Initial Release
+- App Button bugfix
 
 
 ## License notes
