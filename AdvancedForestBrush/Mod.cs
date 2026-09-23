@@ -11,7 +11,7 @@ namespace AdvancedForestBrush
     public sealed class Mod : IMod
     {
         public const string Id = "AdvancedForestBrush";
-        public const string ModVersion = "0.5.0";
+        public const string ModVersion = "0.6.0";
         internal static ILog Log { get; private set; }
         public static Setting Settings { get; private set; }
 
@@ -35,7 +35,9 @@ namespace AdvancedForestBrush
                 new Setting(this));
 
             Settings.ApplyToState();
-            updateSystem.UpdateAt<ForestBrushShapeSystem>(SystemUpdatePhase.ToolUpdate);
+            // Suppress the ObjectTool brush before it processes Ctrl + right-drag.
+            updateSystem.UpdateBefore<ForestBrushShapeSystem, ObjectToolSystem>(
+                SystemUpdatePhase.ToolUpdate);
             // ObjectTool writes the vanilla Brush component during ToolUpdate.
             // Run afterwards so the circular preview cannot reappear on top of
             // the square, rectangle or polygon preview.
@@ -58,4 +60,3 @@ namespace AdvancedForestBrush
         }
     }
 }
-

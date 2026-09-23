@@ -21,7 +21,7 @@
 		- Square with adjustable size and rotation
 		- Rectangle with separate width, length and rotation controls
 		- Multi-point polygon with an unlimited number of corner points
-		
+
 
 		## Distribution modes
 
@@ -49,6 +49,7 @@
 
 		- Configurable noise size and irregularity
 		- Movable and rotatable completed polygons
+		- Species Grouping – Places selected tree species in natural-looking patches
 		- Support for the game and editor
 		- English, German, Spanish, Italian, French localization
 
@@ -103,14 +104,14 @@
 
 	<ForumLink Value="" />
 
-	<ModVersion Value="0.5.0" />
+	<ModVersion Value="0.6.0" />
 	<GameVersion Value="1.6.*" />
 
 	<!-- Required dependency: Tree Controller by yenyang -->
 	<Dependency Id="75993" DisplayName="Tree Controller" />
 
 	<ChangeLog>
-		## Version 0.5.0
+		## Version 0.6.0
 
 		- Initial Release
 	</ChangeLog>

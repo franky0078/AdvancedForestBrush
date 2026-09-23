@@ -12,7 +12,7 @@ Tree Controller by yenyang (Paradox Mods ID 75993) is required. Advanced Forest 
 - Square with adjustable size and rotation
 - Rectangle with separate width, length and rotation controls
 - Multi-point polygon with an unlimited number of corner points
-		
+
 
 ## Distribution modes
 
@@ -40,6 +40,7 @@ Advanced Forest Brush uses the Tree Controller age selection and supports:
 
 - Configurable noise size and irregularity
 - Movable and rotatable completed polygons
+- Species Grouping – Places selected tree species in natural-looking patches
 - Support for the game and editor
 - English, German, Spanish, Italian, French localization
 

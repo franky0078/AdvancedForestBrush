@@ -5,6 +5,7 @@ using Game.Tools;
 using Game.UI;
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine.InputSystem;
 
 namespace AdvancedForestBrush
 {
@@ -97,7 +98,18 @@ namespace AdvancedForestBrush
                 (ForestBrushState.PolygonClosed &&
                  !ForestBrushState.SuppressPolygonPlacement);
 
-            m_ObjectToolSystem.brushStrength = polygonReady
+            bool rotating = ForestBrushState.HasValidCursor &&
+                !ForestBrushState.PointerOverUI &&
+                (ForestBrushState.Shape == ForestBrushShape.Square ||
+                 ForestBrushState.Shape == ForestBrushShape.Rectangle ||
+                 (ForestBrushState.Shape == ForestBrushShape.Polygon &&
+                  ForestBrushState.PolygonClosed)) &&
+                Keyboard.current != null && Mouse.current != null &&
+                (Keyboard.current.leftCtrlKey.isPressed ||
+                 Keyboard.current.rightCtrlKey.isPressed) &&
+                Mouse.current.rightButton.isPressed;
+
+            m_ObjectToolSystem.brushStrength = polygonReady && !rotating
                 ? ForestBrushState.DensityPercent / 100f
                 : 0f;
         }

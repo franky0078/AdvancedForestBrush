@@ -20,7 +20,6 @@ namespace AdvancedForestBrush
         private ToolRaycastSystem m_ToolRaycastSystem;
         private PrefabSystem m_PrefabSystem;
         private InputAction m_ApplyAction;
-        private InputAction m_SecondaryAction;
         private InputAction m_PointerDeltaAction;
         private float m_LastClickTime = -10f;
         private float3 m_LastClickPosition;
@@ -38,17 +37,12 @@ namespace AdvancedForestBrush
                 "AdvancedForestBrushApply",
                 InputActionType.Button,
                 "<Mouse>/leftButton");
-            m_SecondaryAction = new InputAction(
-                "AdvancedForestBrushSecondary",
-                InputActionType.Button,
-                "<Mouse>/rightButton");
             m_PointerDeltaAction = new InputAction(
                 "AdvancedForestBrushPointerDelta",
                 InputActionType.Value,
                 "<Mouse>/delta");
 
             m_ApplyAction.Enable();
-            m_SecondaryAction.Enable();
             m_PointerDeltaAction.Enable();
         }
 
@@ -94,8 +88,11 @@ namespace AdvancedForestBrush
 
             if ((ForestBrushState.Shape == ForestBrushShape.Square ||
                  ForestBrushState.Shape == ForestBrushShape.Rectangle) &&
-                m_SecondaryAction.ReadValue<float>() >= 0.5f)
+                IsRotationGesture())
             {
+                // ObjectTool runs later in ToolUpdate; keep its brush from
+                // erasing vegetation during Ctrl + right-drag rotation.
+                m_ObjectToolSystem.brushStrength = 0f;
                 RotateFromPointerDelta();
             }
         }
@@ -111,15 +108,19 @@ namespace AdvancedForestBrush
 
             if (ForestBrushState.PolygonClosed)
             {
-                if (m_SecondaryAction.ReadValue<float>() >= 0.5f)
+                if (IsRotationGesture())
                 {
+                    m_ObjectToolSystem.brushStrength = 0f;
                     RotateFromPointerDelta();
                 }
 
                 return;
             }
 
-            if (m_SecondaryAction.WasPressedThisFrame())
+            // Backspace undoes the last point. Right click is reserved for
+            // the game's normal vegetation erase action.
+            if (Keyboard.current != null &&
+                Keyboard.current.backspaceKey.wasPressedThisFrame)
             {
                 int count = ForestBrushState.PolygonPoints.Count;
                 if (count > 0)
@@ -176,6 +177,14 @@ namespace AdvancedForestBrush
             ForestBrushState.SuppressPolygonPlacement = true;
             m_LastClickTime = UnityEngine.Time.unscaledTime;
             m_LastClickPosition = position;
+        }
+
+        private static bool IsRotationGesture()
+        {
+            return Keyboard.current != null && Mouse.current != null &&
+                (Keyboard.current.leftCtrlKey.isPressed ||
+                 Keyboard.current.rightCtrlKey.isPressed) &&
+                Mouse.current.rightButton.isPressed;
         }
 
         private void RotateFromPointerDelta()
@@ -272,7 +281,6 @@ namespace AdvancedForestBrush
         protected override void OnDestroy()
         {
             m_ApplyAction?.Dispose();
-            m_SecondaryAction?.Dispose();
             m_PointerDeltaAction?.Dispose();
             base.OnDestroy();
         }

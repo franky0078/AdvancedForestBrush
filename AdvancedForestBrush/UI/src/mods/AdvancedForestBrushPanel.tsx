@@ -109,28 +109,52 @@ const NumberControl = ({
     upTooltip,
     tooltipText
 }: NumberControlProps) => {
+    // Keep incomplete text locally. The game binding only receives a complete
+    // number after Enter or blur, so typing "500" does not commit "5" first.
+    const [draft, setDraft] = useState<string | null>(null);
     const clamp = (next: number) => Math.min(max, Math.max(min, next));
+    const commit = (text: string) => {
+        const next = Number(text.trim());
+        setDraft(null);
+        if (text.trim() !== "" && Number.isFinite(next)) {
+            const bounded = clamp(next);
+            if (bounded !== value) onChange(bounded);
+        }
+    };
+    const stepBy = (direction: number) => {
+        const typed = draft === null ? NaN : Number(draft);
+        const base = draft !== null && draft.trim() !== "" && Number.isFinite(typed)
+            ? clamp(typed) : value;
+        setDraft(null);
+        onChange(clamp(base + direction * step));
+    };
     const row = (
         <div className={styles.settingRow}>
             <div className={styles.settingLabel}>{label}</div>
             <div className={styles.numberControl}>
-                <button title={downTooltip} onClick={() => onChange(clamp(value - step))}><Chevron /></button>
+                <button title={downTooltip} onMouseDown={event => event.preventDefault()} onClick={() => stepBy(-1)}><Chevron /></button>
                 <div className={styles.numberValue}>
                     <input
                         type="number"
                         min={min}
                         max={max}
                         step={step}
-                        value={value}
+                        value={draft ?? String(value)}
                         aria-label={label}
-                        onChange={event => {
-                            const next = Number(event.currentTarget.value);
-                            if (Number.isFinite(next)) onChange(clamp(next));
+                        onFocus={() => setDraft(String(value))}
+                        onChange={event => setDraft(event.currentTarget.value)}
+                        onBlur={event => { if (draft !== null) commit(event.currentTarget.value); }}
+                        onKeyDown={event => {
+                            if (event.key === "Enter") event.currentTarget.blur();
+                            if (event.key === "Escape") {
+                                event.currentTarget.value = String(value);
+                                event.currentTarget.blur();
+                            }
                         }}
                     />
                     <span>{unit}</span>
                 </div>
-                <button title={upTooltip} disabled={value >= max} onClick={() => onChange(clamp(value + step))}><Chevron up /></button>
+                <button title={upTooltip} disabled={draft === null && value >= max} onMouseDown={event => event.preventDefault()} onClick={() => stepBy(1)}><Chevron up /></button>
             </div>
         </div>
     );
@@ -176,11 +200,11 @@ export const AdvancedForestBrushPanel = () => {
         circle: loc("Circle", "Circle"),
         circleTip: loc("CircleTooltip", "Normal round brush."),
         square: loc("Square", "Square"),
-        squareTip: loc("SquareTooltip", "Square brush. Hold the right mouse button and move the mouse horizontally to rotate."),
+        squareTip: loc("SquareTooltip", "Square brush. Hold Ctrl and the right mouse button, then move horizontally to rotate. Right-click erases vegetation."),
         rectangle: loc("Rectangle", "Rectangle"),
-        rectangleTip: loc("RectangleTooltip", "Rectangular brush with separate width and length. Rotatable."),
+        rectangleTip: loc("RectangleTooltip", "Rectangular brush with separate width and length. Hold Ctrl and right-drag to rotate."),
         polygon: loc("Polygon", "Multipoint polygon"),
-        polygonTip: loc("PolygonTooltip", "Left-click to set points. Close the polygon by clicking the first point or double-clicking. Hold the right mouse button and move horizontally to rotate the finished polygon."),
+        polygonTip: loc("PolygonTooltip", "Left-click to set points; Backspace removes the last point. Click the first point or double-click to close. Hold Ctrl and right-drag to rotate the closed polygon. Right-click erases vegetation."),
         brushSize: loc("BrushSize", "Brush size"),
         size: loc("Size", "Size"),
         width: loc("Width", "Width"),
