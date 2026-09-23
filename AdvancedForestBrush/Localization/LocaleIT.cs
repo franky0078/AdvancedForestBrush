@@ -51,6 +51,12 @@ namespace AdvancedForestBrush.Localization
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultNoiseScale)), "Dimensione iniziale del modello di distribuzione." },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DefaultNoiseStrength)), "Irregolarità predefinita (%)" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultNoiseStrength)), "Intensità iniziale della variazione casuale fine." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DefaultSpeciesGrouping)), "Raggruppamento specie predefinito" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DefaultSpeciesGrouping)), "0 = disattivato, 1 = debole, 2 = medio, 3 = forte. Distribuisce le specie selezionate in Tree Controller." },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTSPECIESGROUPING[Off]", "Disattivato" },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTSPECIESGROUPING[Weak]", "Debole" },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTSPECIESGROUPING[Medium]", "Medio" },
+                { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTSPECIESGROUPING[Strong]", "Forte" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ResetToDefaults)), "Ripristina valori predefiniti" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ResetToDefaults)), "Ripristina tutti i valori predefiniti di Advanced Forest Brush." },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.Version)), "Versione" },
@@ -84,6 +90,12 @@ namespace AdvancedForestBrush.Localization
                 { "AdvancedForestBrush.UI.NoiseSizeTooltip", "Controlla la dimensione del modello di rumore. Valori piccoli creano variazioni piccole e frequenti; valori grandi creano gruppi e radure estesi." },
                 { "AdvancedForestBrush.UI.Irregularity", "Irregolarità" },
                 { "AdvancedForestBrush.UI.IrregularityTooltip", "Controlla quanto i dettagli casuali fini modificano la distribuzione di base. Valori più alti creano bordi più irregolari e naturali." },
+                { "AdvancedForestBrush.UI.SpeciesGrouping", "Raggruppamento specie" },
+                { "AdvancedForestBrush.UI.SpeciesGroupingTooltip", "Favorisce zone con la stessa specie. Un raggruppamento più forte lascia meno alberi; aumenta la densità se necessario." },
+                { "AdvancedForestBrush.UI.GroupingOff", "No" },
+                { "AdvancedForestBrush.UI.GroupingWeak", "Debole" },
+                { "AdvancedForestBrush.UI.GroupingMedium", "Medio" },
+                { "AdvancedForestBrush.UI.GroupingStrong", "Forte" },
                 { "AdvancedForestBrush.UI.TreeAge", "Età / dimensione" },
                 { "AdvancedForestBrush.UI.PreserveAge", "Mantieni età" },
                 { "AdvancedForestBrush.UI.PreserveAgeTooltip", "Impedisce agli alberi appena posizionati di continuare a invecchiare e crescere." },
@@ -115,4 +127,3 @@ namespace AdvancedForestBrush.Localization
         public void Unload() { }
     }
 }
-

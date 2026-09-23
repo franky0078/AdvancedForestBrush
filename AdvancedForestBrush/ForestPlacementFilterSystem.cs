@@ -47,7 +47,8 @@ namespace AdvancedForestBrush
                 ForestBrushState.Shape != ForestBrushShape.Circle;
 
             if (!customShape &&
-                ForestBrushState.NoiseMode == ForestNoiseMode.Uniform)
+                ForestBrushState.NoiseMode == ForestNoiseMode.Uniform &&
+                ForestBrushState.SpeciesGrouping == 0)
             {
                 return;
             }
@@ -102,11 +103,39 @@ namespace AdvancedForestBrush
                     ForestBrushState.NoiseMode != ForestNoiseMode.Uniform &&
                     !Keep(definition.m_Position, creation.m_RandomSeed);
 
-                if (outsideShape || rejectedByNoise)
+                bool rejectedBySpecies =
+                    ForestBrushState.SpeciesGrouping != 0 &&
+                    !KeepSpecies(definition.m_Position, creation.m_Prefab,
+                        creation.m_RandomSeed);
+
+                if (outsideShape || rejectedByNoise || rejectedBySpecies)
                 {
                     EntityManager.DestroyEntity(entity);
                 }
             }
+        }
+
+        // Each prefab gets a stable, smooth map in world coordinates. Tree Controller
+        // continues to choose the prefab and age; we only favour its own patches.
+        // Filtering rather than replacing the prefab preserves its selected mix.
+        private static bool KeepSpecies(float3 position, Entity prefab, int randomSeed)
+        {
+            uint species = math.hash(new uint2((uint)prefab.Index,
+                (uint)prefab.Version));
+            float2 offset = new float2((species & 0xffffu) * 0.0137f,
+                ((species >> 16) & 0xffffu) * 0.0179f);
+            // The existing NoiseSize controls the approximate width of a patch.
+            float2 p = new float2(position.x, position.z) /
+                math.max(10f, ForestBrushState.NoiseScale);
+            float field = noise.snoise(p + offset) * 0.5f + 0.5f;
+            float grouping = ForestBrushState.SpeciesGrouping == 1 ? 0.35f :
+                ForestBrushState.SpeciesGrouping == 2 ? 0.65f : 0.9f;
+            float chance = math.lerp(1f,
+                math.smoothstep(0.12f, 0.88f, field), grouping);
+            uint hash = math.hash(new uint4(math.asuint(position.x),
+                math.asuint(position.z), (uint)randomSeed, species));
+            float random = (hash & 0x00ffffffu) / 16777215f;
+            return random < chance;
         }
 
         private static bool Keep(float3 position, int randomSeed)

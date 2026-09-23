@@ -23,6 +23,7 @@ namespace AdvancedForestBrush
         private ForestNoiseMode m_DefaultNoiseMode;
         private int m_DefaultNoiseScale;
         private int m_DefaultNoiseStrength;
+        private ForestSpeciesGrouping m_DefaultSpeciesGrouping;
 
         public Setting(IMod mod)
             : base(mod)
@@ -137,6 +138,17 @@ namespace AdvancedForestBrush
         }
 
         [SettingsUISection(kSection, kDefaultsGroup)]
+        public ForestSpeciesGrouping DefaultSpeciesGrouping
+        {
+            get => m_DefaultSpeciesGrouping;
+            set
+            {
+                m_DefaultSpeciesGrouping = (ForestSpeciesGrouping)math.clamp((int)value, 0, 3);
+                ForestBrushState.SpeciesGrouping = (int)m_DefaultSpeciesGrouping;
+            }
+        }
+
+        [SettingsUISection(kSection, kDefaultsGroup)]
         public bool ResetToDefaults
         {
             set => SetDefaults();
@@ -156,6 +168,7 @@ namespace AdvancedForestBrush
             DefaultNoiseMode = ForestNoiseMode.Uniform;
             DefaultNoiseScale = 45;
             DefaultNoiseStrength = 50;
+            DefaultSpeciesGrouping = ForestSpeciesGrouping.Off;
         }
 
         public void ApplyToState()
@@ -169,6 +182,7 @@ namespace AdvancedForestBrush
             ForestBrushState.NoiseMode = DefaultNoiseMode;
             ForestBrushState.NoiseScale = DefaultNoiseScale;
             ForestBrushState.NoiseStrength = DefaultNoiseStrength;
+            ForestBrushState.SpeciesGrouping = (int)DefaultSpeciesGrouping;
         }
     }
 }

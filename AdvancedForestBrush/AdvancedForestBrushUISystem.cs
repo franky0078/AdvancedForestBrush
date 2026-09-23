@@ -35,6 +35,7 @@ namespace AdvancedForestBrush
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "NoiseMode", () => (int)ForestBrushState.NoiseMode));
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "NoiseScale", () => ForestBrushState.NoiseScale));
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "NoiseStrength", () => ForestBrushState.NoiseStrength));
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "SpeciesGrouping", () => ForestBrushState.SpeciesGrouping));
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "Shape", () => (int)ForestBrushState.Shape));
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "ShapeWidth", () => ForestBrushState.ShapeWidth));
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "ShapeLength", () => ForestBrushState.ShapeLength));
@@ -49,6 +50,7 @@ namespace AdvancedForestBrush
             AddBinding(new TriggerBinding<int>(Mod.Id, "SetNoiseMode", value => ForestBrushState.NoiseMode = (ForestNoiseMode)math.clamp(value, 0, 4)));
             AddBinding(new TriggerBinding<int>(Mod.Id, "SetNoiseScale", value => ForestBrushState.NoiseScale = math.clamp(value, 10, 200)));
             AddBinding(new TriggerBinding<int>(Mod.Id, "SetNoiseStrength", value => ForestBrushState.NoiseStrength = math.clamp(value, 0, 100)));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "SetSpeciesGrouping", value => ForestBrushState.SpeciesGrouping = math.clamp(value, 0, 3)));
             AddBinding(new TriggerBinding<int>(Mod.Id, "SetShape", SetShape));
             AddBinding(new TriggerBinding<int>(Mod.Id, "SetShapeWidth", SetShapeWidth));
             AddBinding(new TriggerBinding<int>(Mod.Id, "SetShapeLength", SetShapeLength));

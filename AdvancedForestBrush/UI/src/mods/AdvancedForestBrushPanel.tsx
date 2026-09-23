@@ -15,6 +15,7 @@ const density$ = bindValue<number>(mod.id, "Density");
 const noiseMode$ = bindValue<number>(mod.id, "NoiseMode");
 const noiseScale$ = bindValue<number>(mod.id, "NoiseScale");
 const noiseStrength$ = bindValue<number>(mod.id, "NoiseStrength");
+const speciesGrouping$ = bindValue<number>(mod.id, "SpeciesGrouping");
 const shape$ = bindValue<number>(mod.id, "Shape");
 const shapeWidth$ = bindValue<number>(mod.id, "ShapeWidth");
 const shapeLength$ = bindValue<number>(mod.id, "ShapeLength");
@@ -151,6 +152,7 @@ export const AdvancedForestBrushPanel = () => {
     const noiseMode = useValue(noiseMode$);
     const noiseScale = useValue(noiseScale$);
     const noiseStrength = useValue(noiseStrength$);
+    const speciesGrouping = useValue(speciesGrouping$);
     const selectedAges = useValue(selectedAges$);
     const preserveAge = useValue(toolbar.decorationMode$);
     const shape = useValue(shape$);
@@ -186,6 +188,9 @@ export const AdvancedForestBrushPanel = () => {
         rotation: loc("Rotation", "Rotation"),
         density: loc("Density", "Density"),
         distribution: loc("Distribution", "Distribution"),
+        speciesGrouping: loc("SpeciesGrouping", "Species grouping"),
+        speciesGroupingTip: loc("SpeciesGroupingTooltip", "Groups the selected tree species into patches. Stronger grouping leaves fewer trees; adjust density if needed."),
+        groupingLevels: [loc("GroupingOff", "Off"), loc("GroupingWeak", "Weak"), loc("GroupingMedium", "Medium"), loc("GroupingStrong", "Strong")],
         noiseSize: loc("NoiseSize", "Noise size"),
         noiseSizeTip: loc("NoiseSizeTooltip", "Controls the size of the noise pattern."),
         irregularity: loc("Irregularity", "Irregularity"),
@@ -551,16 +556,39 @@ export const AdvancedForestBrushPanel = () => {
                             </div>
                         </div>
 
-                        {noiseMode !== 0 && (
+                        {(noiseMode !== 0 || speciesGrouping !== 0) && (
                             <div className={styles.noiseSettings}>
                                 <NumberControl label={t.noiseSize} value={noiseScale} min={10} max={200} step={5} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.noiseSizeTip} onChange={value => fire("SetNoiseScale", value)} />
-                                <NumberControl label={t.irregularity} value={noiseStrength} min={0} max={100} step={5} unit="%" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.irregularityTip} onChange={value => fire("SetNoiseStrength", value)} />
+                                {noiseMode !== 0 && <NumberControl label={t.irregularity} value={noiseStrength} min={0} max={100} step={5} unit="%" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.irregularityTip} onChange={value => fire("SetNoiseStrength", value)} />}
                             </div>
                         )}
+
+                        <div className={styles.distributionRow}>
+                            <div className={styles.settingLabel}>{t.speciesGrouping}</div>
+                            <div className={styles.groupingRow}>
+                                {t.groupingLevels.map((label, index) => {
+                                    const button = (
+                                        <button
+                                            type="button"
+                                            aria-label={label}
+                                            aria-pressed={speciesGrouping === index}
+                                            className={classNames(styles.groupingButton, speciesGrouping === index && styles.selected)}
+                                            onClick={() => fire("SetSpeciesGrouping", index)}
+                                        >{label}</button>
+                                    );
+                                    return (
+                                        <span key={index} className={styles.groupingSlot}>
+                                            {Tooltip
+                                                ? <Tooltip tooltip={<><div className={tooltipTheme?.title}>{label}</div><div className={tooltipTheme?.content}>{t.speciesGroupingTip}</div></>}>{button}</Tooltip>
+                                                : button}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
         </Portal>
     );
 };
-

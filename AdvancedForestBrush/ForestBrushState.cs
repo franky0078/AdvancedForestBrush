@@ -20,6 +20,14 @@ namespace AdvancedForestBrush
         Polygon
     }
 
+    public enum ForestSpeciesGrouping
+    {
+        Off,
+        Weak,
+        Medium,
+        Strong
+    }
+
     public static class ForestBrushState
     {
         public static bool PanelVisible;
@@ -28,6 +36,8 @@ namespace AdvancedForestBrush
         public static ForestNoiseMode NoiseMode = ForestNoiseMode.Uniform;
         public static int NoiseScale = 45;
         public static int NoiseStrength = 50;
+        // 0 = off, 1 = weak, 2 = medium, 3 = strong.
+        public static int SpeciesGrouping;
         public static int Seed = 1977;
 
         public static ForestBrushShape Shape = ForestBrushShape.Circle;

@@ -26,6 +26,10 @@
 .iconRow { display:flex; flex:1; gap:4rem; }
 .iconButton { position:relative; flex:1 1 0; min-width:0; height:30rem; overflow:visible; }
 .iconButton svg { width:21rem; height:21rem; fill:currentColor; }
+.groupingRow { display:flex; flex:1; gap:4rem; min-width:0; }
+.groupingSlot { flex:1 1 0; min-width:0; }
+.groupingButton { width:100%; min-width:0; height:30rem; padding:0 2rem; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#f0f6fa; font-size:11rem; white-space:nowrap; }
+.groupingButton:hover { background:rgba(58,89,108,.9); }
 .selected { border-color:#7be49b; background:linear-gradient(#318e58,#176a38); }
 .noiseSettings { display:flex; flex-direction:column; gap:2rem; margin-top:3rem; }
 .polygonStatus { display:flex; align-items:center; justify-content:space-between; gap:8rem; min-height:32rem; padding:2rem 0; font-size:12rem; color:rgba(234,241,245,.8); }
