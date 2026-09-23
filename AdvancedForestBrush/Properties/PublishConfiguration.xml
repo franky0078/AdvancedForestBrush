@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Publish>
-	<!-- Add ModId after the first Paradox Mods publication when updating the existing mod. -->
-	<!-- <ModId Value="" /> -->
+	
+	<ModId Value="160294" />
 
 	<DisplayName Value="Advanced Forest Brush" />
 	<ShortDescription Value="Create natural forests with custom brush shapes, distribution patterns, density controls and tree ages." />
