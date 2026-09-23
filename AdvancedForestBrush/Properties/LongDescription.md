@@ -5,7 +5,7 @@ Advanced Forest Brush expands vegetation placement in Cities: Skylines II
 
 ## Required dependency
 
-Tree Controller by yenyang (Paradox Mods ID 75993) is required. Advanced Forest Brush uses its toolbar and tree-age selection.
+Tree Controller by yenyang is required. Advanced Forest Brush uses its toolbar and tree-age selection.
 
 
 ## Brush shapes
