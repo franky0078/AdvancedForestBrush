@@ -109,8 +109,6 @@ const NumberControl = ({
     upTooltip,
     tooltipText
 }: NumberControlProps) => {
-    // Keep incomplete text locally. The game binding only receives a complete
-    // number after Enter or blur, so typing "500" does not commit "5" first.
     const [draft, setDraft] = useState<string | null>(null);
     const clamp = (next: number) => Math.min(max, Math.max(min, next));
     const commit = (text: string) => {
