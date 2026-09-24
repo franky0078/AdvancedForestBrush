@@ -15,6 +15,26 @@ namespace AdvancedForestBrush
         internal static ILog Log { get; private set; }
         public static Setting Settings { get; private set; }
 
+        public static bool DiagnosticLoggingEnabled =>
+            Settings?.EnableDiagnosticLogging ?? false;
+
+        public static void LogDiagnosticInfo(string message)
+        {
+            if (!DiagnosticLoggingEnabled || string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            try
+            {
+                Log?.Info(message);
+            }
+            catch
+            {
+                // Logging must not interrupt the tool.
+            }
+        }
+
         public void OnLoad(UpdateSystem updateSystem)
         {
             Log = LogManager.GetLogger("AdvancedForestBrush").SetShowsErrorsInUI(false);
@@ -36,6 +56,7 @@ namespace AdvancedForestBrush
                 new Setting(this));
 
             Settings.ApplyToState();
+            LogDiagnosticInfo($"Diagnostic logging enabled for Advanced Forest Brush {ModVersion}.");
             // Suppress the ObjectTool brush before it processes a rotation drag.
             updateSystem.UpdateBefore<ForestBrushShapeSystem, ObjectToolSystem>(
                 SystemUpdatePhase.ToolUpdate);

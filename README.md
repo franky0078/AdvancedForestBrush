@@ -15,7 +15,7 @@ Advanced Forest Brush expands vegetation placement in Cities: Skylines II
 - Circle with adjustable brush size
 - Square with adjustable size and rotation
 - Rectangle with separate width, length and rotation controls
-- Multi-point polygon with an unlimited number of corner points
+- Multi-point polygon with an unlimited number of corner points and visual feedback for the completed shape
 
 
 ## Distribution modes

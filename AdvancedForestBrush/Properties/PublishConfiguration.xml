@@ -22,7 +22,7 @@
 		- Circle with adjustable brush size
 		- Square with adjustable size and rotation
 		- Rectangle with separate width, length and rotation controls
-		- Multi-point polygon with an unlimited number of corner points
+		- Multi-point polygon with an unlimited number of corner points and visual feedback for the completed shape
 
 
 		## Distribution modes
@@ -97,7 +97,7 @@
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="0.8.1" />
+	<ModVersion Value="0.8.2" />
 	<GameVersion Value="1.6.*" />
 
 	
@@ -105,9 +105,10 @@
 	<Dependency Id="74417" DisplayName="Unified Icon Library" Version="1.0.13" />
 
 	<ChangeLog>
-		## Version 0.8.1
+		## Version 0.8.2
 
 		- Multipoint polygon mode now provides visual feedback
+		- add logging for brush placement
 
 	</ChangeLog>
 

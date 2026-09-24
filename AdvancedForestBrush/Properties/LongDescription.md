@@ -13,7 +13,7 @@ Tree Controller by yenyang is required. Advanced Forest Brush uses its toolbar a
 - Circle with adjustable brush size
 - Square with adjustable size and rotation
 - Rectangle with separate width, length and rotation controls
-- Multi-point polygon with an unlimited number of corner points
+- Multi-point polygon with an unlimited number of corner points and visual feedback for the completed shape
 
 
 ## Distribution modes

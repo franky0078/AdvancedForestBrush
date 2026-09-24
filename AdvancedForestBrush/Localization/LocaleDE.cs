@@ -70,6 +70,8 @@ namespace AdvancedForestBrush.Localization
                 { "Options.AdvancedForestBrush.AdvancedForestBrush.Mod.FORESTSPECIESGROUPING[Strong]", "Stark" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ResetToDefaults)), "Standardwerte zurücksetzen" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ResetToDefaults)), "Setzt alle Standardwerte von Advanced Forest Brush zurück." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableDiagnosticLogging)), "Diagnose-Logging aktivieren" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableDiagnosticLogging)), "Schreibt zusätzliche Werkzeug- und Polygonmeldungen ins Spiellog. Standardmäßig deaktiviert. Warnungen und Fehler werden immer protokolliert." },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.Version)), "Version" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.Version)), "Zeigt die aktuell installierte Version an." },
 

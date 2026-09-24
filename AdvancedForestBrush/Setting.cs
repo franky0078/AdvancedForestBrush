@@ -55,6 +55,7 @@ namespace AdvancedForestBrush
         private int m_DefaultNoiseScale;
         private int m_DefaultNoiseStrength;
         private ForestSpeciesGrouping m_DefaultSpeciesGrouping;
+        private bool m_EnableDiagnosticLogging;
 
         public Setting(IMod mod)
             : base(mod)
@@ -186,6 +187,22 @@ namespace AdvancedForestBrush
         }
 
         [SettingsUISection(kSection, kAboutGroup)]
+        public bool EnableDiagnosticLogging
+        {
+            get => m_EnableDiagnosticLogging;
+            set
+            {
+                if (m_EnableDiagnosticLogging == value)
+                {
+                    return;
+                }
+
+                m_EnableDiagnosticLogging = value;
+                Mod.Log?.Info($"Advanced Forest Brush diagnostic logging {(value ? "enabled" : "disabled")}.");
+            }
+        }
+
+        [SettingsUISection(kSection, kAboutGroup)]
         public string Version => Mod.ModVersion;
 
         public override void SetDefaults()
@@ -200,6 +217,7 @@ namespace AdvancedForestBrush
             DefaultNoiseScale = 45;
             DefaultNoiseStrength = 50;
             DefaultSpeciesGrouping = ForestSpeciesGrouping.Off;
+            EnableDiagnosticLogging = false;
         }
 
         public void ApplyToState()

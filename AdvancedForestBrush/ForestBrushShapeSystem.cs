@@ -63,12 +63,24 @@ namespace AdvancedForestBrush
 
             if (!IsVegetationBrush())
             {
+                if (ForestBrushState.Shape == ForestBrushShape.Polygon &&
+                    m_ApplyAction.WasPressedThisFrame() &&
+                    !ForestBrushState.PointerOverUI)
+                {
+                    Mod.LogDiagnosticInfo("Polygon click ignored: select a vegetation prefab and activate its brush tool.");
+                }
                 ForestBrushState.HasValidCursor = false;
                 return;
             }
 
             if (!m_ToolRaycastSystem.GetRaycastResult(out RaycastResult result))
             {
+                if (ForestBrushState.Shape == ForestBrushShape.Polygon &&
+                    m_ApplyAction.WasPressedThisFrame() &&
+                    !ForestBrushState.PointerOverUI)
+                {
+                    Mod.LogDiagnosticInfo("Polygon click ignored: no valid ground raycast.");
+                }
                 ForestBrushState.HasValidCursor = false;
                 return;
             }
@@ -101,6 +113,7 @@ namespace AdvancedForestBrush
             if (Keyboard.current != null &&
                 Keyboard.current.escapeKey.wasPressedThisFrame)
             {
+                Mod.LogDiagnosticInfo($"Polygon reset with {ForestBrushState.PolygonPoints.Count} points.");
                 ForestBrushState.ResetPolygon();
                 m_LastClickTime = -10f;
                 return;
@@ -126,6 +139,7 @@ namespace AdvancedForestBrush
                 if (count > 0)
                 {
                     ForestBrushState.PolygonPoints.RemoveAt(count - 1);
+                    Mod.LogDiagnosticInfo($"Polygon last point removed; {count - 1} points remain.");
                 }
 
                 ForestBrushState.SuppressPolygonPlacement = true;
@@ -155,6 +169,14 @@ namespace AdvancedForestBrush
             {
                 ForestBrushState.SuppressPolygonPlacement = true;
                 bool valid = IsValidPolygon() && ForestBrushState.FinalizePolygon();
+                if (valid)
+                {
+                    Mod.LogDiagnosticInfo($"Polygon closed via {(nearFirst ? "first-point click" : "double-click")} with {pointCount} points.");
+                }
+                else
+                {
+                    Mod.LogDiagnosticInfo($"Polygon closure rejected via {(nearFirst ? "first-point click" : "double-click")}: {GetPolygonInvalidReason(false, default)} ({pointCount} points).");
+                }
                 ShowFeedback(valid);
                 m_LastClickTime = -10f;
                 if (valid)
@@ -175,6 +197,7 @@ namespace AdvancedForestBrush
                 // Reject an invalid next corner before it changes the stored outline.
                 if (pointCount >= 2 && !IsValidPolygon(position))
                 {
+                    Mod.LogDiagnosticInfo($"Polygon point rejected: {GetPolygonInvalidReason(true, position)} ({pointCount} existing points).");
                     ShowFeedback(false);
                     m_LastClickTime = -10f;
                     ForestBrushState.SuppressPolygonPlacement = true;
@@ -182,6 +205,7 @@ namespace AdvancedForestBrush
                 }
 
                 ForestBrushState.PolygonPoints.Add(position);
+                Mod.LogDiagnosticInfo($"Polygon point added; {pointCount + 1} points total.");
                 ForestBrushState.PolygonFeedbackUntil = 0f;
             }
 
@@ -239,10 +263,15 @@ namespace AdvancedForestBrush
 
         private static bool IsValidPolygon(bool includeNext, float3 nextPoint)
         {
+            return GetPolygonInvalidReason(includeNext, nextPoint) == null;
+        }
+
+        private static string GetPolygonInvalidReason(bool includeNext, float3 nextPoint)
+        {
             int count = ForestBrushState.PolygonPoints.Count + (includeNext ? 1 : 0);
             if (count < 3)
             {
-                return false;
+                return "fewer than three points";
             }
 
             float twiceArea = 0f;
@@ -255,7 +284,7 @@ namespace AdvancedForestBrush
 
             if (math.abs(twiceArea) < 0.5f)
             {
-                return false;
+                return "area is too small";
             }
 
             for (int i = 0; i < count; i++)
@@ -276,12 +305,12 @@ namespace AdvancedForestBrush
                     float2 b1 = ToXZ(PolygonPoint((j + 1) % count, includeNext, nextPoint));
                     if (SegmentsIntersect(a0, a1, b0, b1))
                     {
-                        return false;
+                        return "edges intersect";
                     }
                 }
             }
 
-            return true;
+            return null;
         }
 
         private static float2 ToXZ(float3 point)
