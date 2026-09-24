@@ -76,6 +76,8 @@ namespace AdvancedForestBrush.Localization
                 { "AdvancedForestBrush.UI.Title", "Advanced Forest Brush" },
                 { "AdvancedForestBrush.UI.Open", "Advanced Forest Brush öffnen" },
                 { "AdvancedForestBrush.UI.Close", "Advanced Forest Brush schließen" },
+                { "AdvancedForestBrush.UI.Anarchy", "Anarchy" },
+                { "AdvancedForestBrush.UI.AnarchyTooltip", "Schaltet Anarchy für das Platzieren mit dem Pinsel um. Benötigt die Anarchy-Mod." },
                 { "AdvancedForestBrush.UI.Back", "Zurück zum Tree Controller" },
                 { "AdvancedForestBrush.UI.Shape", "Form" },
                 { "AdvancedForestBrush.UI.Circle", "Kreis" },

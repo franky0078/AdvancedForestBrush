@@ -76,6 +76,8 @@ namespace AdvancedForestBrush.Localization
                 { "AdvancedForestBrush.UI.Title", "Advanced Forest Brush" },
                 { "AdvancedForestBrush.UI.Open", "Ouvrir Advanced Forest Brush" },
                 { "AdvancedForestBrush.UI.Close", "Fermer Advanced Forest Brush" },
+                { "AdvancedForestBrush.UI.Anarchy", "Anarchy" },
+                { "AdvancedForestBrush.UI.AnarchyTooltip", "Active ou désactive Anarchy pour placer la végétation au pinceau. Nécessite le mod Anarchy." },
                 { "AdvancedForestBrush.UI.Back", "Retour à Tree Controller" },
                 { "AdvancedForestBrush.UI.Shape", "Forme" },
                 { "AdvancedForestBrush.UI.Circle", "Cercle" },

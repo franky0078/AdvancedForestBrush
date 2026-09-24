@@ -3,7 +3,7 @@
 		<OutputType>Library</OutputType>
 		<Configurations>Debug;Release</Configurations>
 		<LangVersion>9</LangVersion>
-		<AssemblyVersion>0.7.1</AssemblyVersion>
+		<AssemblyVersion>0.8.0</AssemblyVersion>
 		<FileVersion>$(AssemblyVersion)</FileVersion>
 		<Version>$(AssemblyVersion)</Version>
 	</PropertyGroup>

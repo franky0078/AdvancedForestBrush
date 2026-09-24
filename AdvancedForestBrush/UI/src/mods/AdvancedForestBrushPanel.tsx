@@ -24,6 +24,9 @@ const rotation$ = bindValue<number>(mod.id, "Rotation");
 const polygonPointCount$ = bindValue<number>(mod.id, "PolygonPointCount");
 const polygonClosed$ = bindValue<boolean>(mod.id, "PolygonClosed");
 const selectedAges$ = bindValue<number>("Tree_Controller", "SelectedAges");
+const anarchyEnabled$ = bindValue<boolean>("Anarchy", "AnarchyEnabled");
+const ANARCHY_STANDARD_ICON = "coui://uil/Standard/Anarchy.svg";
+const ANARCHY_COLORED_ICON = "coui://uil/Colored/Anarchy.svg";
 
 const TREE_AGE = {
     Sapling: 1,
@@ -176,6 +179,9 @@ export const AdvancedForestBrushPanel = () => {
     const noiseStrength = useValue(noiseStrength$);
     const speciesGrouping = useValue(speciesGrouping$);
     const selectedAges = useValue(selectedAges$);
+    const anarchyEnabled = useValue(anarchyEnabled$) === true;
+    const [loadedAnarchyIcon, setLoadedAnarchyIcon] = useState<string | null>(null);
+    const [failedAnarchyIcon, setFailedAnarchyIcon] = useState<string | null>(null);
     const preserveAge = useValue(toolbar.decorationMode$);
     const shape = useValue(shape$);
     const shapeWidth = useValue(shapeWidth$);
@@ -194,6 +200,8 @@ export const AdvancedForestBrushPanel = () => {
         open: loc("Open", "Open Advanced Forest Brush"),
         close: loc("Close", "Close Advanced Forest Brush"),
         back: loc("Back", "Back"),
+        anarchy: loc("Anarchy", "Anarchy"),
+        anarchyTip: loc("AnarchyTooltip", "Toggles the Anarchy mod for brush placement. Requires Anarchy to be installed."),
         shape: loc("Shape", "Shape"),
         circle: loc("Circle", "Circle"),
         circleTip: loc("CircleTooltip", "Normal round brush."),
@@ -433,6 +441,39 @@ export const AdvancedForestBrushPanel = () => {
         )
         : backButton;
 
+    const anarchyIcon = anarchyEnabled ? ANARCHY_COLORED_ICON : ANARCHY_STANDARD_ICON;
+    const anarchyButton = (
+        <button
+            type="button"
+            className={classNames(styles.anarchyButton, anarchyEnabled && styles.anarchyButtonActive)}
+            aria-label={t.anarchy}
+            aria-pressed={anarchyEnabled}
+            title={Tooltip ? undefined : t.anarchyTip}
+            onClick={event => {
+                event.preventDefault();
+                event.stopPropagation();
+                trigger("Anarchy", "AnarchyToggled");
+            }}
+        >
+            <span className={styles.anarchyIcon} aria-hidden="true">
+                {loadedAnarchyIcon !== anarchyIcon && (
+                    <svg viewBox="0 0 32 32">
+                        <circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" strokeWidth="2" />
+                        <path d="M8 25 16 5l8 20M11 19h10" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
+                    </svg>
+                )}
+                {failedAnarchyIcon !== anarchyIcon && (
+                    <img key={anarchyIcon} src={anarchyIcon} alt=""
+                        onLoad={() => setLoadedAnarchyIcon(anarchyIcon)}
+                        onError={() => setFailedAnarchyIcon(anarchyIcon)} />
+                )}
+            </span>
+        </button>
+    );
+    const anarchyControl = Tooltip
+        ? <Tooltip tooltip={<><div className={tooltipTheme?.title}>{t.anarchy}</div><div className={tooltipTheme?.content}>{t.anarchyTip}</div></>}>{anarchyButton}</Tooltip>
+        : anarchyButton;
+
     const tooltipButton = (
         glyph: GlyphName,
         selected: boolean,
@@ -495,6 +536,7 @@ export const AdvancedForestBrushPanel = () => {
                 >
                     <div className={styles.header}>
                         {backControl}
+                        {anarchyControl}
                     </div>
 
                     <div className={styles.content}>
