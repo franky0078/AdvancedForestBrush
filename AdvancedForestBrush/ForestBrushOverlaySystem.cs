@@ -26,12 +26,35 @@ namespace AdvancedForestBrush
             if (!ForestBrushState.PanelVisible ||
                 !ForestBrushState.HasValidCursor ||
                 ForestBrushState.Shape != ForestBrushShape.Polygon ||
-                ForestBrushState.PolygonClosed)
+                (ForestBrushState.PolygonClosed &&
+                 UnityEngine.Time.unscaledTime >= ForestBrushState.PolygonFeedbackUntil))
             {
                 return;
             }
 
-            BuildPreviewPoints();
+            bool closed = ForestBrushState.PolygonClosed;
+            bool snapping = !closed &&
+                ForestBrushShapeSystem.IsNearFirst(ForestBrushState.CursorPosition);
+            bool invalid = false;
+            if (!closed && ForestBrushState.PolygonPoints.Count >= 2)
+            {
+                float3 last = ForestBrushState.PolygonPoints[
+                    ForestBrushState.PolygonPoints.Count - 1];
+                bool newCorner = math.distancesq(
+                    new float2(last.x, last.z),
+                    new float2(ForestBrushState.CursorPosition.x,
+                        ForestBrushState.CursorPosition.z)) >=
+                    ForestBrushShapeSystem.MinimumPointDistance *
+                    ForestBrushShapeSystem.MinimumPointDistance;
+                invalid = snapping
+                    ? !ForestBrushShapeSystem.IsValidPolygon()
+                    : newCorner &&
+                      !ForestBrushShapeSystem.IsValidPolygon(
+                          ForestBrushState.CursorPosition);
+            }
+
+            bool feedback = UnityEngine.Time.unscaledTime < ForestBrushState.PolygonFeedbackUntil;
+            BuildPreviewPoints(closed, snapping);
             if (m_Points.Count < 2)
             {
                 return;
@@ -75,10 +98,13 @@ namespace AdvancedForestBrush
             {
                 OverlayBuffer = buffer,
                 Points = points,
-                Closed = false,
-                Polygon = true,
+                Closed = closed || snapping,
+                StoredPointCount = ForestBrushState.PolygonPoints.Count,
+                Invalid = feedback ? !ForestBrushState.PolygonFeedbackValid : invalid,
+                Green = feedback ? ForestBrushState.PolygonFeedbackValid : snapping && !invalid,
                 ActiveColor = new UnityEngine.Color(0.2f, 0.82f, 1f, 1f),
-                ConfirmedColor = new UnityEngine.Color(0.25f, 0.95f, 0.45f, 1f)
+                ConfirmedColor = new UnityEngine.Color(0.25f, 0.95f, 0.45f, 1f),
+                InvalidColor = new UnityEngine.Color(1f, 0.85f, 0.15f, 1f)
             };
 
             JobHandle handle = job.Schedule(
@@ -87,12 +113,12 @@ namespace AdvancedForestBrush
             Dependency = handle;
         }
 
-        private void BuildPreviewPoints()
+        private void BuildPreviewPoints(bool closed, bool snapping)
         {
             m_Points.Clear();
 
             m_Points.AddRange(ForestBrushState.PolygonPoints);
-            if (ForestBrushState.HasValidCursor)
+            if (!closed && !snapping)
             {
                 m_Points.Add(ForestBrushState.CursorPosition);
             }
@@ -106,15 +132,18 @@ namespace AdvancedForestBrush
             public NativeArray<float3> Points;
 
             public bool Closed;
-            public bool Polygon;
+            public int StoredPointCount;
+            public bool Invalid;
+            public bool Green;
             public UnityEngine.Color ActiveColor;
             public UnityEngine.Color ConfirmedColor;
+            public UnityEngine.Color InvalidColor;
 
             public void Execute()
             {
-                UnityEngine.Color color = Closed
-                    ? ConfirmedColor
-                    : ActiveColor;
+                UnityEngine.Color color = Invalid
+                    ? InvalidColor
+                    : Green ? ConfirmedColor : ActiveColor;
 
                 for (int i = 0; i + 1 < Points.Length; i++)
                 {
@@ -124,20 +153,16 @@ namespace AdvancedForestBrush
                         0.7f);
                 }
 
-                if (Closed && Points.Length >= 3)
+                if (Points.Length >= 3 &&
+                    (Closed || StoredPointCount >= 3))
                 {
                     OverlayBuffer.DrawLine(
                         color,
                         new Line3.Segment(Points[Points.Length - 1], Points[0]),
-                        0.7f);
+                        0.18f);
                 }
 
-                if (!Polygon)
-                {
-                    return;
-                }
-
-                int markerCount = Closed ? Points.Length : Points.Length - 1;
+                int markerCount = math.min(StoredPointCount, Points.Length);
                 for (int i = 0; i < markerCount; i++)
                 {
                     OverlayBuffer.DrawCircle(

@@ -11,9 +11,10 @@ namespace AdvancedForestBrush
 {
     public partial class ForestBrushShapeSystem : GameSystemBase
     {
-        private const float CloseDistance = 3f;
-        private const float MinimumPointDistance = 0.75f;
+        internal const float CloseDistance = 3f;
+        internal const float MinimumPointDistance = 0.75f;
         private const float DoubleClickSeconds = 0.35f;
+        private const float FeedbackSeconds = 0.55f;
 
         private ToolSystem m_ToolSystem;
         private ObjectToolSystem m_ObjectToolSystem;
@@ -101,6 +102,7 @@ namespace AdvancedForestBrush
                 Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 ForestBrushState.ResetPolygon();
+                m_LastClickTime = -10f;
                 return;
             }
 
@@ -127,6 +129,8 @@ namespace AdvancedForestBrush
                 }
 
                 ForestBrushState.SuppressPolygonPlacement = true;
+                m_LastClickTime = -10f;
+                ForestBrushState.PolygonFeedbackUntil = 0f;
                 return;
             }
 
@@ -137,12 +141,7 @@ namespace AdvancedForestBrush
 
             float3 position = ForestBrushState.CursorPosition;
             int pointCount = ForestBrushState.PolygonPoints.Count;
-            bool nearFirst = pointCount >= 3 &&
-                math.distance(
-                    new float2(position.x, position.z),
-                    new float2(
-                        ForestBrushState.PolygonPoints[0].x,
-                        ForestBrushState.PolygonPoints[0].z)) <= CloseDistance;
+            bool nearFirst = IsNearFirst(position);
 
             bool doubleClick =
                 pointCount >= 3 &&
@@ -152,12 +151,16 @@ namespace AdvancedForestBrush
                     new float2(m_LastClickPosition.x, m_LastClickPosition.z)) <=
                     CloseDistance;
 
-            if ((nearFirst || doubleClick) &&
-                IsValidPolygon() &&
-                ForestBrushState.FinalizePolygon())
+            if (nearFirst || doubleClick)
             {
                 ForestBrushState.SuppressPolygonPlacement = true;
-                m_ReleasePolygonSuppression = true;
+                bool valid = IsValidPolygon() && ForestBrushState.FinalizePolygon();
+                ShowFeedback(valid);
+                m_LastClickTime = -10f;
+                if (valid)
+                {
+                    m_ReleasePolygonSuppression = true;
+                }
                 return;
             }
 
@@ -169,7 +172,17 @@ namespace AdvancedForestBrush
                         ForestBrushState.PolygonPoints[pointCount - 1].z)) >=
                     MinimumPointDistance)
             {
+                // Reject an invalid next corner before it changes the stored outline.
+                if (pointCount >= 2 && !IsValidPolygon(position))
+                {
+                    ShowFeedback(false);
+                    m_LastClickTime = -10f;
+                    ForestBrushState.SuppressPolygonPlacement = true;
+                    return;
+                }
+
                 ForestBrushState.PolygonPoints.Add(position);
+                ForestBrushState.PolygonFeedbackUntil = 0f;
             }
 
             ForestBrushState.SuppressPolygonPlacement = true;
@@ -192,9 +205,41 @@ namespace AdvancedForestBrush
             }
         }
 
-        private static bool IsValidPolygon()
+        private static void ShowFeedback(bool valid)
         {
-            int count = ForestBrushState.PolygonPoints.Count;
+            ForestBrushState.PolygonFeedbackValid = valid;
+            ForestBrushState.PolygonFeedbackUntil =
+                UnityEngine.Time.unscaledTime + FeedbackSeconds;
+        }
+
+        internal static bool IsNearFirst(float3 position)
+        {
+            return ForestBrushState.PolygonPoints.Count >= 3 &&
+                math.distancesq(ToXZ(position),
+                    ToXZ(ForestBrushState.PolygonPoints[0])) <=
+                CloseDistance * CloseDistance;
+        }
+
+        internal static bool IsValidPolygon()
+        {
+            return IsValidPolygon(false, default);
+        }
+
+        internal static bool IsValidPolygon(float3 nextPoint)
+        {
+            return IsValidPolygon(true, nextPoint);
+        }
+
+        private static float3 PolygonPoint(int index, bool includeNext, float3 nextPoint)
+        {
+            return includeNext && index == ForestBrushState.PolygonPoints.Count
+                ? nextPoint
+                : ForestBrushState.PolygonPoints[index];
+        }
+
+        private static bool IsValidPolygon(bool includeNext, float3 nextPoint)
+        {
+            int count = ForestBrushState.PolygonPoints.Count + (includeNext ? 1 : 0);
             if (count < 3)
             {
                 return false;
@@ -203,8 +248,8 @@ namespace AdvancedForestBrush
             float twiceArea = 0f;
             for (int i = 0; i < count; i++)
             {
-                float3 current = ForestBrushState.PolygonPoints[i];
-                float3 next = ForestBrushState.PolygonPoints[(i + 1) % count];
+                float3 current = PolygonPoint(i, includeNext, nextPoint);
+                float3 next = PolygonPoint((i + 1) % count, includeNext, nextPoint);
                 twiceArea += current.x * next.z - next.x * current.z;
             }
 
@@ -215,8 +260,8 @@ namespace AdvancedForestBrush
 
             for (int i = 0; i < count; i++)
             {
-                float2 a0 = ToXZ(ForestBrushState.PolygonPoints[i]);
-                float2 a1 = ToXZ(ForestBrushState.PolygonPoints[(i + 1) % count]);
+                float2 a0 = ToXZ(PolygonPoint(i, includeNext, nextPoint));
+                float2 a1 = ToXZ(PolygonPoint((i + 1) % count, includeNext, nextPoint));
 
                 for (int j = i + 1; j < count; j++)
                 {
@@ -227,8 +272,8 @@ namespace AdvancedForestBrush
                         continue;
                     }
 
-                    float2 b0 = ToXZ(ForestBrushState.PolygonPoints[j]);
-                    float2 b1 = ToXZ(ForestBrushState.PolygonPoints[(j + 1) % count]);
+                    float2 b0 = ToXZ(PolygonPoint(j, includeNext, nextPoint));
+                    float2 b1 = ToXZ(PolygonPoint((j + 1) % count, includeNext, nextPoint));
                     if (SegmentsIntersect(a0, a1, b0, b1))
                     {
                         return false;

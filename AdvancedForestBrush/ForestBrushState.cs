@@ -55,6 +55,8 @@ namespace AdvancedForestBrush
         public static float PolygonHalfLength;
         public static float PolygonBoundingRadius;
         public static int PolygonVersion;
+        public static float PolygonFeedbackUntil;
+        public static bool PolygonFeedbackValid;
 
         public static void SetDensity(int value)
         {
@@ -98,6 +100,7 @@ namespace AdvancedForestBrush
             PolygonHalfLength = 0f;
             PolygonBoundingRadius = 0f;
             PolygonClosed = false;
+            PolygonFeedbackUntil = 0f;
             SuppressPolygonPlacement = Shape == ForestBrushShape.Polygon;
             PolygonVersion++;
         }
@@ -159,6 +162,7 @@ namespace AdvancedForestBrush
             PolygonHalfLength = 0f;
             PolygonBoundingRadius = 0f;
             PolygonClosed = false;
+            PolygonFeedbackUntil = 0f;
             SuppressPolygonPlacement = true;
             PolygonVersion++;
         }
