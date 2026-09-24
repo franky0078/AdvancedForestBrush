@@ -83,12 +83,6 @@ When reporting a problem, please include:
 Some parts of the code and user interface were created with AI assistance. AI is also used for debugging and troubleshooting.
 
 
-## Changes
-
-
-### Version 0.7.1
-
-- App Button bugfix
 
 
 ## License notes
