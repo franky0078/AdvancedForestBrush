@@ -16,6 +16,12 @@ namespace AdvancedForestBrush
     [SettingsUIKeyboardAction(kRotateAction, ActionType.Button,
         SettingsUIInputActionAttribute.kDefaultRebindOptions,
         ModifierOptions.Allow, true, usages: new[] { Usages.kToolUsage })]
+    [SettingsUIMouseAction(kAddSpeciesAction, ActionType.Button,
+        SettingsUIInputActionAttribute.kDefaultRebindOptions,
+        ModifierOptions.Allow, true, usages: new[] { Usages.kToolUsage })]
+    [SettingsUIKeyboardAction(kAddSpeciesAction, ActionType.Button,
+        SettingsUIInputActionAttribute.kDefaultRebindOptions,
+        ModifierOptions.Allow, true, usages: new[] { Usages.kToolUsage })]
     public sealed class Setting : ModSetting
     {
         public const string kSection = "Main";
@@ -24,6 +30,7 @@ namespace AdvancedForestBrush
         public const string kControlsGroup = "Bindings";
         public const string kAboutGroup = "About";
         public const string kRotateAction = "RotateBrush";
+        public const string kAddSpeciesAction = "AddSpeciesToList";
 
         [SettingsUISection(kControlsSection, kControlsGroup)]
         [SettingsUIMouseBinding(BindingMouse.Right, kRotateAction, ctrl: true)]
@@ -32,6 +39,14 @@ namespace AdvancedForestBrush
         [SettingsUISection(kControlsSection, kControlsGroup)]
         [SettingsUIKeyboardBinding(BindingKeyboard.None, kRotateAction)]
         public ProxyBinding RotateKeyboard { get; set; }
+
+        [SettingsUISection(kControlsSection, kControlsGroup)]
+        [SettingsUIMouseBinding(BindingMouse.Left, kAddSpeciesAction, ctrl: true)]
+        public ProxyBinding AddSpeciesMouse { get; set; }
+
+        [SettingsUISection(kControlsSection, kControlsGroup)]
+        [SettingsUIKeyboardBinding(BindingKeyboard.None, kAddSpeciesAction)]
+        public ProxyBinding AddSpeciesKeyboard { get; set; }
 
         [SettingsUISection(kControlsSection, kControlsGroup)]
         public bool ResetBindings
@@ -56,6 +71,15 @@ namespace AdvancedForestBrush
         private int m_DefaultNoiseStrength;
         private ForestSpeciesGrouping m_DefaultSpeciesGrouping;
         private bool m_EnableDiagnosticLogging;
+
+        [SettingsUIHidden]
+        public int PaletteWindowLeft { get; set; }
+
+        [SettingsUIHidden]
+        public int PaletteWindowTop { get; set; }
+
+        [SettingsUIHidden]
+        public int PaletteWindowHeight { get; set; }
 
         public Setting(IMod mod)
             : base(mod)
@@ -192,11 +216,7 @@ namespace AdvancedForestBrush
             get => m_EnableDiagnosticLogging;
             set
             {
-                if (m_EnableDiagnosticLogging == value)
-                {
-                    return;
-                }
-
+                if (m_EnableDiagnosticLogging == value) return;
                 m_EnableDiagnosticLogging = value;
                 Mod.Log?.Info($"Advanced Forest Brush diagnostic logging {(value ? "enabled" : "disabled")}.");
             }
@@ -218,6 +238,9 @@ namespace AdvancedForestBrush
             DefaultNoiseStrength = 50;
             DefaultSpeciesGrouping = ForestSpeciesGrouping.Off;
             EnableDiagnosticLogging = false;
+            PaletteWindowLeft = -1;
+            PaletteWindowTop = -1;
+            PaletteWindowHeight = 320;
         }
 
         public void ApplyToState()

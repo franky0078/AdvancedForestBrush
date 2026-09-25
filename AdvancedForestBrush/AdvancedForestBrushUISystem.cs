@@ -19,6 +19,7 @@ namespace AdvancedForestBrush
         private float m_PreviousBrushSize;
         private float m_PreviousBrushStrength;
         private bool m_OwnsObjectToolState;
+        private int m_ShortcutAddFrames;
 
         public override GameMode gameMode => GameMode.GameOrEditor;
 
@@ -28,9 +29,16 @@ namespace AdvancedForestBrush
             m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
             m_ObjectToolSystem = World.GetOrCreateSystemManaged<ObjectToolSystem>();
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
+            ForestSpeciesPalette.Clear();
+            ForestSpeciesPalette.Active = false;
 
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "IsVisible", IsVegetationContext));
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "PanelVisible", () => ForestBrushState.PanelVisible));
+            AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesPalette", () => ForestSpeciesPalette.NamesJson));
+            AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "SpeciesPaletteActive", () => ForestSpeciesPalette.Active));
+            AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "PaletteWindowLayout", () =>
+                $"{Mod.Settings?.PaletteWindowLeft ?? -1},{Mod.Settings?.PaletteWindowTop ?? -1},{Mod.Settings?.PaletteWindowHeight ?? 320}"));
+            AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "CurrentSpecies", () => IsVegetationContext() ? m_ToolSystem.activePrefab.name : ""));
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "Density", () => ForestBrushState.DensityPercent));
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "NoiseMode", () => (int)ForestBrushState.NoiseMode));
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "NoiseScale", () => ForestBrushState.NoiseScale));
@@ -45,6 +53,12 @@ namespace AdvancedForestBrush
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "PolygonClosed", () => ForestBrushState.PolygonClosed));
 
             AddBinding(new TriggerBinding(Mod.Id, "TogglePanel", TogglePanel));
+            AddBinding(new TriggerBinding(Mod.Id, "AddCurrentSpecies", AddCurrentSpecies));
+            AddBinding(new TriggerBinding(Mod.Id, "TryAddSpeciesShortcut", TryAddSpeciesShortcut));
+            AddBinding(new TriggerBinding(Mod.Id, "ToggleSpeciesPalette", () => ForestSpeciesPalette.Active = !ForestSpeciesPalette.Active));
+            AddBinding(new TriggerBinding<string>(Mod.Id, "SavePaletteWindowLayout", SavePaletteWindowLayout));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "RemoveSpecies", ForestSpeciesPalette.Remove));
+            AddBinding(new TriggerBinding(Mod.Id, "ClearSpecies", ForestSpeciesPalette.Clear));
             AddBinding(new TriggerBinding<int>(Mod.Id, "SetDensity", value => ForestBrushState.SetDensity(value)));
             AddBinding(new TriggerBinding<int>(Mod.Id, "StepDensity", direction => ForestBrushState.StepDensity(direction)));
             AddBinding(new TriggerBinding<int>(Mod.Id, "SetNoiseMode", value => ForestBrushState.NoiseMode = (ForestNoiseMode)math.clamp(value, 0, 4)));
@@ -58,6 +72,24 @@ namespace AdvancedForestBrush
             AddBinding(new TriggerBinding<float>(Mod.Id, "SetRotation", value => ForestBrushState.SetRotation(value)));
             AddBinding(new TriggerBinding(Mod.Id, "ResetPolygon", ForestBrushState.ResetPolygon));
             AddBinding(new TriggerBinding<bool>(Mod.Id, "SetPointerOverUI", value => ForestBrushState.PointerOverUI = value));
+        }
+
+        private static void SavePaletteWindowLayout(string layout)
+        {
+            var values = layout?.Split(',');
+            if (values == null || values.Length != 3 ||
+                !int.TryParse(values[0], out var left) ||
+                !int.TryParse(values[1], out var top) ||
+                !int.TryParse(values[2], out var height) ||
+                left < 0 || top < 0 || height < 230 || Mod.Settings == null)
+            {
+                return;
+            }
+
+            Mod.Settings.PaletteWindowLeft = left;
+            Mod.Settings.PaletteWindowTop = top;
+            Mod.Settings.PaletteWindowHeight = height;
+            Mod.Settings.ApplyAndSave();
         }
 
         protected override void OnUpdate()
@@ -77,6 +109,11 @@ namespace AdvancedForestBrush
             }
 
             ForestBrushInput.Activate();
+            ForestBrushInput.Update();
+            if (m_ShortcutAddFrames > 0 && --m_ShortcutAddFrames == 0)
+            {
+                AddCurrentSpecies();
+            }
 
             if (ForestBrushState.Shape == ForestBrushShape.Circle)
             {
@@ -124,6 +161,25 @@ namespace AdvancedForestBrush
             AcquireObjectToolState();
         }
 
+        private void AddCurrentSpecies()
+        {
+            if (IsVegetationContext() &&
+                m_PrefabSystem.TryGetEntity(m_ToolSystem.activePrefab, out Entity entity))
+            {
+                ForestSpeciesPalette.Add(entity, m_ToolSystem.activePrefab.name);
+            }
+        }
+
+        private void TryAddSpeciesShortcut()
+        {
+            if (ForestBrushState.PanelVisible && ForestSpeciesPalette.Active &&
+                ForestBrushInput.IsAddingSpecies)
+            {
+                // Allow the game's asset selection to finish before reading activePrefab.
+                m_ShortcutAddFrames = 2;
+            }
+        }
+
         private void AcquireObjectToolState()
         {
             if (m_OwnsObjectToolState)
@@ -147,9 +203,11 @@ namespace AdvancedForestBrush
         private void ClosePanel(bool restorePreviousTool)
         {
             ForestBrushState.PanelVisible = false;
+            ForestSpeciesPalette.Active = false;
             ForestBrushState.PointerOverUI = false;
             ForestBrushState.HasValidCursor = false;
             ForestBrushInput.Deactivate();
+            m_ShortcutAddFrames = 0;
 
             if (!m_OwnsObjectToolState)
             {

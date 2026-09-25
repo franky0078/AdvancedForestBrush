@@ -11,7 +11,7 @@ namespace AdvancedForestBrush
     public sealed class Mod : IMod
     {
         public const string Id = "AdvancedForestBrush";
-        public const string ModVersion = "0.8.1";
+        public const string ModVersion = "0.9.0";
         internal static ILog Log { get; private set; }
         public static Setting Settings { get; private set; }
 
@@ -31,7 +31,7 @@ namespace AdvancedForestBrush
             }
             catch
             {
-                // Logging must not interrupt the tool.
+                // A logging failure must not interrupt the brush.
             }
         }
 
@@ -56,7 +56,6 @@ namespace AdvancedForestBrush
                 new Setting(this));
 
             Settings.ApplyToState();
-            LogDiagnosticInfo($"Diagnostic logging enabled for Advanced Forest Brush {ModVersion}.");
             // Suppress the ObjectTool brush before it processes a rotation drag.
             updateSystem.UpdateBefore<ForestBrushShapeSystem, ObjectToolSystem>(
                 SystemUpdatePhase.ToolUpdate);
@@ -66,6 +65,8 @@ namespace AdvancedForestBrush
             updateSystem.UpdateAt<AdvancedForestBrushUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<ForestBrushTooltipSystem>(SystemUpdatePhase.UITooltip);
             updateSystem.UpdateBefore<ForestPlacementFilterSystem>(SystemUpdatePhase.Modification1);
+            updateSystem.UpdateBefore<ForestSpeciesPlacementSystem, GenerateObjectsSystem>(
+                SystemUpdatePhase.Modification1);
         }
 
         public void OnDispose()

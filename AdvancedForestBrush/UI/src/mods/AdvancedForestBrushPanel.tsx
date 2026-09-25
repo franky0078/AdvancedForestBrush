@@ -11,6 +11,10 @@ import { VanillaComponentResolver } from "./VanillaComponentResolver";
 
 const visible$ = bindValue<boolean>(mod.id, "IsVisible");
 const panelVisible$ = bindValue<boolean>(mod.id, "PanelVisible");
+const speciesPalette$ = bindValue<string>(mod.id, "SpeciesPalette");
+const speciesPaletteActive$ = bindValue<boolean>(mod.id, "SpeciesPaletteActive");
+const paletteWindowLayout$ = bindValue<string>(mod.id, "PaletteWindowLayout");
+const currentSpecies$ = bindValue<string>(mod.id, "CurrentSpecies");
 const density$ = bindValue<number>(mod.id, "Density");
 const noiseMode$ = bindValue<number>(mod.id, "NoiseMode");
 const noiseScale$ = bindValue<number>(mod.id, "NoiseScale");
@@ -173,6 +177,15 @@ export const AdvancedForestBrushPanel = () => {
     const { translate } = useLocalization();
     const visible = useValue(visible$);
     const panelVisible = useValue(panelVisible$);
+    const speciesPaletteJson = useValue(speciesPalette$);
+    const speciesPaletteActive = useValue(speciesPaletteActive$);
+    const paletteWindowLayout = useValue(paletteWindowLayout$);
+    const currentSpecies = useValue(currentSpecies$);
+    let speciesPalette: string[] = [];
+    try {
+        const parsed = JSON.parse(speciesPaletteJson || "[]");
+        if (Array.isArray(parsed)) speciesPalette = parsed.filter((item): item is string => typeof item === "string");
+    } catch { /* The backend will send a fresh palette on its next update. */ }
     const density = useValue(density$);
     const noiseMode = useValue(noiseMode$);
     const noiseScale = useValue(noiseScale$);
@@ -218,6 +231,14 @@ export const AdvancedForestBrushPanel = () => {
         rotation: loc("Rotation", "Rotation"),
         density: loc("Density", "Density"),
         distribution: loc("Distribution", "Distribution"),
+        species: loc("SpeciesPalette", "Species list"),
+        openSpecies: loc("OpenSpeciesPalette", "Use species list"),
+        closeSpecies: loc("CloseSpeciesPalette", "Use game selection"),
+        addSpecies: loc("AddSpecies", "Add current plant"),
+        clearSpecies: loc("ClearSpecies", "Clear list"),
+        removeSpecies: loc("RemoveSpecies", "Remove"),
+        speciesHint: loc("SpeciesHint", "Ctrl + left-click a plant in the vegetation bar to add it, or select it and use Add current plant. The shortcut can be changed in Options. An empty list uses the game's selection."),
+        resizeSpecies: loc("ResizeSpeciesPalette", "Resize species list"),
         speciesGrouping: loc("SpeciesGrouping", "Species grouping"),
         speciesGroupingTip: loc("SpeciesGroupingTooltip", "Groups the selected tree species into patches. Stronger grouping leaves fewer trees; adjust density if needed."),
         groupingLevels: [loc("GroupingOff", "Off"), loc("GroupingWeak", "Weak"), loc("GroupingMedium", "Medium"), loc("GroupingStrong", "Strong")],
@@ -256,6 +277,100 @@ export const AdvancedForestBrushPanel = () => {
     const [target, setTarget] = useState<HTMLElement | null>(null);
     const [dockPosition, setDockPosition] = useState({ left: 80, bottom: 70 });
     const panelRef = useRef<HTMLDivElement | null>(null);
+    const paletteRef = useRef<HTMLDivElement | null>(null);
+    const paletteDragOffset = useRef<{ x: number; y: number } | null>(null);
+    const paletteResizeStart = useRef<{ y: number; height: number; top: number } | null>(null);
+    const [palettePosition, setPalettePosition] = useState<{ left: number; top: number } | null>(null);
+    const [paletteHeight, setPaletteHeight] = useState(320);
+
+    const togglePalette = () => {
+        if (!speciesPaletteActive) {
+            const rect = panelRef.current?.getBoundingClientRect();
+            const saved = (paletteWindowLayout || "").split(",").map(Number);
+            if (saved.length === 3 && saved.every(Number.isFinite) && saved[0] >= 0 && saved[1] >= 0 && saved[2] >= 230) {
+                const height = Math.max(230, Math.min(window.innerHeight - 16, saved[2]));
+                const width = paletteRef.current?.getBoundingClientRect().width ?? 460;
+                setPaletteHeight(height);
+                setPalettePosition({
+                    left: Math.max(8, Math.min(window.innerWidth - width - 8, saved[0])),
+                    top: Math.max(8, Math.min(window.innerHeight - height - 8, saved[1]))
+                });
+            } else if (palettePosition === null && rect) {
+                // The native UI width changes with interface scaling: use its real pixels.
+                setPalettePosition({
+                    left: Math.max(8, Math.min(window.innerWidth - 360, rect.right + 18)),
+                    top: Math.max(8, Math.min(window.innerHeight - paletteHeight - 8, rect.top - 20))
+                });
+            }
+        }
+        fire("ToggleSpeciesPalette");
+    };
+
+    useEffect(() => {
+        if (!speciesPaletteActive) return;
+        const onMove = (event: MouseEvent) => {
+            if (paletteResizeStart.current) {
+                const start = paletteResizeStart.current;
+                setPaletteHeight(Math.max(230, Math.min(
+                    window.innerHeight - start.top - 8,
+                    start.height + event.clientY - start.y
+                )));
+                return;
+            }
+            if (!paletteDragOffset.current) return;
+            const width = paletteRef.current?.getBoundingClientRect().width ?? 350;
+            const height = paletteRef.current?.getBoundingClientRect().height ?? 230;
+            setPalettePosition({
+                left: Math.max(8, Math.min(window.innerWidth - width - 8, event.clientX - paletteDragOffset.current.x)),
+                top: Math.max(8, Math.min(window.innerHeight - height - 8, event.clientY - paletteDragOffset.current.y))
+            });
+        };
+        const onUp = () => {
+            if (paletteDragOffset.current || paletteResizeStart.current) {
+                const rect = paletteRef.current?.getBoundingClientRect();
+                if (rect) fire("SavePaletteWindowLayout", [rect.left, rect.top, rect.height].map(Math.round).join(","));
+            }
+            paletteDragOffset.current = null;
+            paletteResizeStart.current = null;
+        };
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+        return () => {
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+            paletteDragOffset.current = null;
+            paletteResizeStart.current = null;
+        };
+    }, [speciesPaletteActive]);
+
+    useEffect(() => {
+        if (!panelVisible || !speciesPaletteActive) return;
+        const onPlantClick = (event: MouseEvent) => {
+            if (event.button !== 0 || !(event.target instanceof Element) ||
+                panelRef.current?.contains(event.target) ||
+                paletteRef.current?.contains(event.target)) return;
+
+            // The game's vegetation tiles are square controls in the lower asset bar.
+            // Check the clicked control, not the entire toolbar or other UI panels.
+            let candidate: HTMLElement | null = event.target instanceof HTMLElement
+                ? event.target : event.target.parentElement;
+            for (let depth = 0; candidate && depth < 5; depth++, candidate = candidate.parentElement) {
+                const rect = candidate.getBoundingClientRect();
+                if (rect.width >= 55 && rect.width <= 180 &&
+                    rect.height >= 55 && rect.height <= 180 &&
+                    rect.width / rect.height >= 0.65 && rect.width / rect.height <= 1.5 &&
+                    rect.top > window.innerHeight * 0.6 &&
+                    rect.bottom < window.innerHeight - 20 &&
+                    (candidate.matches("button,[role='button']") ||
+                     candidate.querySelector("img,svg") !== null)) {
+                    fire("TryAddSpeciesShortcut");
+                    break;
+                }
+            }
+        };
+        document.addEventListener("mousedown", onPlantClick, true);
+        return () => document.removeEventListener("mousedown", onPlantClick, true);
+    }, [panelVisible, speciesPaletteActive]);
 
     useEffect(() => {
         if (!visible) return;
@@ -592,6 +707,14 @@ export const AdvancedForestBrushPanel = () => {
                         <NumberControl label={t.density} value={density} min={10} max={300} step={density < 100 ? 5 : 10} unit="%" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetDensity", value)} />
 
                         <div className={styles.divider} />
+                        <button
+                            type="button"
+                            className={classNames(styles.paletteToggle, speciesPaletteActive && styles.selected)}
+                            aria-pressed={speciesPaletteActive}
+                            onClick={togglePalette}
+                        >{speciesPaletteActive ? t.closeSpecies : t.openSpecies}</button>
+
+                        <div className={styles.divider} />
                         <div className={styles.distributionRow}>
                             <div className={styles.settingLabel}>{t.treeAge}</div>
                             <div className={styles.iconRow}>
@@ -653,6 +776,54 @@ export const AdvancedForestBrushPanel = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+            {panelVisible && speciesPaletteActive && (
+                <div
+                    ref={paletteRef}
+                    className={styles.paletteWindow}
+                    style={{ left: `${palettePosition?.left ?? 560}px`, top: `${palettePosition?.top ?? 400}px`, height: `${paletteHeight}px` }}
+                    onMouseEnter={() => fire("SetPointerOverUI", true)}
+                    onMouseLeave={() => fire("SetPointerOverUI", false)}
+                    onMouseDown={event => event.stopPropagation()}
+                    onClick={event => event.stopPropagation()}
+                    onContextMenu={event => { event.preventDefault(); event.stopPropagation(); }}
+                >
+                    <div className={styles.paletteWindowHeader} onMouseDown={event => {
+                        if ((event.target as HTMLElement).closest("button")) return;
+                        const rect = paletteRef.current?.getBoundingClientRect();
+                        if (!rect) return;
+                        event.preventDefault();
+                        paletteDragOffset.current = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+                    }}>
+                        {Tooltip
+                            ? <Tooltip tooltip={<><div className={tooltipTheme?.title}>{t.species}</div><div className={tooltipTheme?.content}>{t.speciesHint}</div></>}><strong>{t.species}</strong></Tooltip>
+                            : <strong title={t.speciesHint}>{t.species}</strong>}
+                        <button type="button" aria-label={t.closeSpecies} title={t.closeSpecies} onClick={togglePalette}>×</button>
+                    </div>
+                    <div className={styles.paletteControls}>
+                        <div className={styles.paletteHeading}>
+                            <button type="button" disabled={!currentSpecies || speciesPalette.includes(currentSpecies)} onClick={() => fire("AddCurrentSpecies")}>{t.addSpecies}</button>
+                            <button type="button" disabled={!speciesPalette.length} onClick={() => fire("ClearSpecies")}>{t.clearSpecies}</button>
+                        </div>
+                    </div>
+                    <div className={styles.paletteList}>
+                        {speciesPalette.map((name, index) => <div className={styles.paletteItem} key={`${name}-${index}`}>
+                            <span title={name}>{name}</span>
+                            <button type="button" title={t.removeSpecies} aria-label={`${t.removeSpecies}: ${name}`} onClick={() => fire("RemoveSpecies", index)}>×</button>
+                        </div>)}
+                    </div>
+                    <div
+                        className={styles.paletteResizeGrip}
+                        title={t.resizeSpecies}
+                        aria-label={t.resizeSpecies}
+                        onMouseDown={event => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            const rect = paletteRef.current?.getBoundingClientRect();
+                            if (rect) paletteResizeStart.current = { y: event.clientY, height: rect.height, top: rect.top };
+                        }}
+                    />
                 </div>
             )}
         </Portal>

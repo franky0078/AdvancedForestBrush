@@ -22,7 +22,7 @@
 		- Circle with adjustable brush size
 		- Square with adjustable size and rotation
 		- Rectangle with separate width, length and rotation controls
-		- Multi-point polygon with an unlimited number of corner points and visual feedback for the completed shape
+		- Multi-point polygon with an unlimited number of corner points
 
 
 		## Distribution modes
@@ -44,6 +44,7 @@
 		- Configurable noise size and irregularity
 		- Movable and rotatable completed polygons
 		- Species Grouping – Places selected tree species in natural-looking patches
+		- Optional species list for mixing plants from different pages of the vegetation bar
 		- Support for the game and editor
 		- English, German, Spanish, Italian, French localization
 
@@ -55,6 +56,14 @@
 		For polygons, left-click to add points and click the first point or double-click to close the polygon.
 		Hold ctrl + right mouse button and move horizontally to rotate the completed polygon.
 		Press Esc or use Reset polygon to start again.
+
+		To mix plants from different pages of the vegetation bar, click **Use species list** in the brush panel. 
+		Ctrl + left-click a plant in the vegetation bar to add it; alternatively, select it and click **Add current plant**. 
+		Scroll the bar and repeat for as many plants as you need. 
+		The brush uses the plants in the list even when they are no longer visible in the bar. 
+		Remove individual plants with **×**, or click **Clear list**. An empty list uses the game's current selection. 
+		Click **Use game selection** or close the list window to return to normal selection. 
+		Change the add-to-list combination under **Options → Advanced Forest Brush → Key bindings**.
 
 
 		## Compatibility
@@ -97,7 +106,7 @@
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="0.8.2" />
+	<ModVersion Value="0.9.0" />
 	<GameVersion Value="1.6.*" />
 
 	
@@ -105,10 +114,13 @@
 	<Dependency Id="74417" DisplayName="Unified Icon Library" Version="1.0.13" />
 
 	<ChangeLog>
-		## Version 0.8.2
+		## Latest changes
 
-		- Multipoint polygon mode now provides visual feedback
-		- add logging for brush placement
+		- Added an optional species list so the brush can use plants selected across different pages of the vegetation bar.
+		- Added Ctrl + left-click to add plants directly from the vegetation bar, with configurable mouse and keyboard bindings.
+		- Added a movable, resizable list window. Its position and height are saved between game sessions.
+		- Added an optional diagnostic logging setting.
+		- Improved visual feedback when drawing multipoint polygons.
 
 	</ChangeLog>
 
@@ -118,5 +130,3 @@
 	<!-- Supported values: Public, Private, Unlisted -->
 	<AccessLevel Value="Public" />
 </Publish>
-
-

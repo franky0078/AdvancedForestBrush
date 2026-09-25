@@ -48,6 +48,7 @@ namespace AdvancedForestBrush
 
             if (!customShape &&
                 ForestBrushState.NoiseMode == ForestNoiseMode.Uniform &&
+                ForestBrushState.SpeciesGrouping == 0 &&
                 ForestBrushState.SpeciesGrouping == 0)
             {
                 return;
@@ -105,6 +106,7 @@ namespace AdvancedForestBrush
 
                 bool rejectedBySpecies =
                     ForestBrushState.SpeciesGrouping != 0 &&
+                    !(ForestSpeciesPalette.Active && ForestSpeciesPalette.Prefabs.Count > 0) &&
                     !KeepSpecies(definition.m_Position, creation.m_Prefab,
                         creation.m_RandomSeed);
 
@@ -116,7 +118,7 @@ namespace AdvancedForestBrush
         }
 
         // Filtering rather than replacing the prefab preserves its selected mix.
-        private static bool KeepSpecies(float3 position, Entity prefab, int randomSeed)
+        internal static bool KeepSpecies(float3 position, Entity prefab, int randomSeed)
         {
             uint species = math.hash(new uint2((uint)prefab.Index,
                 (uint)prefab.Version));
