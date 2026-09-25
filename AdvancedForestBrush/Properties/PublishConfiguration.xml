@@ -97,9 +97,9 @@
 	<Screenshot Value="Properties/Screenshot03.jpg" />
 	<Screenshot Value="Properties/Screenshot04.jpg" />
 	<Screenshot Value="Properties/Screenshot05.jpg" />
-	<!--<Screenshot Value="Properties/Screenshot06.jpg" />
+	<Screenshot Value="Properties/Screenshot06.jpg" />
 	<Screenshot Value="Properties/Screenshot07.jpg" />
-	<Screenshot Value="Properties/Screenshot08.jpg" />
+	<!--<Screenshot Value="Properties/Screenshot08.jpg" />
 	<Screenshot Value="Properties/Screenshot09.jpg" /> -->
 
 	<Tag Value="Code Mod" />
