@@ -49,7 +49,7 @@ namespace AdvancedForestBrush
             if (!customShape &&
                 ForestBrushState.NoiseMode == ForestNoiseMode.Uniform &&
                 ForestBrushState.SpeciesGrouping == 0 &&
-                ForestBrushState.SpeciesGrouping == 0)
+                ForestBrushState.DensityPercent >= 100)
             {
                 return;
             }
@@ -100,6 +100,9 @@ namespace AdvancedForestBrush
                           definition.m_Position,
                           shapeCenter)));
 
+                bool rejectedByDensity = !KeepDensity(
+                    definition.m_Position, creation.m_RandomSeed);
+
                 bool rejectedByNoise =
                     ForestBrushState.NoiseMode != ForestNoiseMode.Uniform &&
                     !Keep(definition.m_Position, creation.m_RandomSeed);
@@ -110,11 +113,24 @@ namespace AdvancedForestBrush
                     !KeepSpecies(definition.m_Position, creation.m_Prefab,
                         creation.m_RandomSeed);
 
-                if (outsideShape || rejectedByNoise || rejectedBySpecies)
+                if (outsideShape || rejectedByDensity || rejectedByNoise || rejectedBySpecies)
                 {
                     EntityManager.DestroyEntity(entity);
                 }
             }
+        }
+
+        private static bool KeepDensity(float3 position, int randomSeed)
+        {
+            if (ForestBrushState.DensityPercent >= 100)
+            {
+                return true;
+            }
+
+            uint hash = math.hash(new uint4(math.asuint(position.x),
+                math.asuint(position.z), (uint)randomSeed, 0x6d2b79f5u));
+            float random = (hash & 0x00ffffffu) / 16777216f;
+            return random < ForestBrushState.DensityPercent / 100f;
         }
 
         // Filtering rather than replacing the prefab preserves its selected mix.
@@ -152,7 +168,13 @@ namespace AdvancedForestBrush
                 case ForestNoiseMode.Natural:
                     return value > 0.28f;
                 case ForestNoiseMode.Clusters:
-                    return value > 0.52f;
+                    float clusterValue = math.lerp(baseNoise, value, 0.35f);
+                    float clusterChance = math.lerp(0.05f, 1f,
+                        math.smoothstep(0.25f, 0.65f, clusterValue));
+                    uint clusterHash = math.hash(new uint4(math.asuint(position.x),
+                        math.asuint(position.z), (uint)randomSeed, 0xa511e9b3u));
+                    float clusterRandom = (clusterHash & 0x00ffffffu) / 16777216f;
+                    return clusterRandom < clusterChance;
                 case ForestNoiseMode.Clearings:
                     return value < 0.38f || value > 0.57f;
                 case ForestNoiseMode.Edge:

@@ -73,6 +73,10 @@ namespace AdvancedForestBrush
                 return;
             }
 
+            // Apply immediately before ObjectToolSystem, after UI systems have
+            // updated their own brush values (including Tree Controller).
+            ApplyBrushStrength();
+
             if (!m_ToolRaycastSystem.GetRaycastResult(out RaycastResult result))
             {
                 if (ForestBrushState.Shape == ForestBrushShape.Polygon &&
@@ -96,6 +100,7 @@ namespace AdvancedForestBrush
             if (ForestBrushState.Shape == ForestBrushShape.Polygon)
             {
                 UpdatePolygonInput();
+                ApplyBrushStrength();
                 return;
             }
 
@@ -106,6 +111,21 @@ namespace AdvancedForestBrush
                 m_ObjectToolSystem.brushStrength = 0f;
                 RotateFromPointerDelta();
             }
+        }
+
+        private void ApplyBrushStrength()
+        {
+            bool polygonReady = ForestBrushState.Shape != ForestBrushShape.Polygon ||
+                (ForestBrushState.PolygonClosed &&
+                 !ForestBrushState.SuppressPolygonPlacement);
+            bool rotating = ForestBrushState.Shape != ForestBrushShape.Circle &&
+                IsRotationGesture();
+
+            // This avoids relying on the game's minimum brush emission rate.
+            m_ObjectToolSystem.brushStrength = polygonReady && !rotating &&
+                !ForestBrushState.PointerOverUI
+                ? math.max(1f, ForestBrushState.DensityPercent / 100f)
+                : 0f;
         }
 
         private void UpdatePolygonInput()
@@ -130,8 +150,6 @@ namespace AdvancedForestBrush
                 return;
             }
 
-            // Backspace undoes the last point. The configured erase action
-            // belongs to the game's vegetation brush.
             if (Keyboard.current != null &&
                 Keyboard.current.backspaceKey.wasPressedThisFrame)
             {

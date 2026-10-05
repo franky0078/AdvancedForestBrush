@@ -130,23 +130,6 @@ namespace AdvancedForestBrush
             {
                 ApplyPolygonBrushBounds();
             }
-
-            bool polygonReady =
-                ForestBrushState.Shape != ForestBrushShape.Polygon ||
-                (ForestBrushState.PolygonClosed &&
-                 !ForestBrushState.SuppressPolygonPlacement);
-
-            bool rotating = ForestBrushState.HasValidCursor &&
-                !ForestBrushState.PointerOverUI &&
-                (ForestBrushState.Shape == ForestBrushShape.Square ||
-                 ForestBrushState.Shape == ForestBrushShape.Rectangle ||
-                 (ForestBrushState.Shape == ForestBrushShape.Polygon &&
-                  ForestBrushState.PolygonClosed)) &&
-                ForestBrushInput.IsRotating;
-
-            m_ObjectToolSystem.brushStrength = polygonReady && !rotating
-                ? ForestBrushState.DensityPercent / 100f
-                : 0f;
         }
 
         private void TogglePanel()

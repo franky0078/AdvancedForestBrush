@@ -11,7 +11,7 @@ namespace AdvancedForestBrush
     public sealed class Mod : IMod
     {
         public const string Id = "AdvancedForestBrush";
-        public const string ModVersion = "0.9.0";
+        public const string ModVersion = "0.9.1";
         internal static ILog Log { get; private set; }
         public static Setting Settings { get; private set; }
 

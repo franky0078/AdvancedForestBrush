@@ -106,7 +106,7 @@
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="0.9.0" />
+	<ModVersion Value="0.9.1" />
 	<GameVersion Value="1.6.*" />
 
 	
@@ -116,12 +116,7 @@
 	<ChangeLog>
 		## Latest changes
 
-		- Added an optional species list so the brush can use plants selected across different pages of the vegetation bar.
-		- Added Ctrl + left-click to add plants directly from the vegetation bar, with configurable mouse and keyboard bindings.
-		- Added a movable, resizable list window. Its position and height are saved between game sessions.
-		- Added an optional diagnostic logging setting.
-		- Improved visual feedback when drawing multipoint polygons.
-
+		- bug fixes and improvements for density controls
 	</ChangeLog>
 
 	<!--Optional external links for your own mod.-->
