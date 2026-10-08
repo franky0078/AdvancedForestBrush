@@ -44,7 +44,7 @@
 		- Configurable noise size and irregularity
 		- Movable and rotatable completed polygons
 		- Species Grouping – Places selected tree species in natural-looking patches
-		- Optional species list for mixing plants from different pages of the vegetation bar
+		- Optional vegetation list for mixing plants from different pages of the vegetation bar
 		- Plant Frequency species list option for controlling the frequency of each plant in the list
 		- Support for the game and editor
 		- English, German, Spanish, Italian, French localization
@@ -107,7 +107,7 @@
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="1.0.1" />
+	<ModVersion Value="1.0.2" />
 	<GameVersion Value="1.6.*" />
 
 	
@@ -117,7 +117,7 @@
 	<ChangeLog>
 		## Latest changes
 
-		- Added asset icons for each plant in the vegetation list.
+		- rename species list to vegetation list
 	</ChangeLog>
 
 	<!--Optional external links for your own mod.-->
