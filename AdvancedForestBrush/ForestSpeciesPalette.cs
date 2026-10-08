@@ -5,8 +5,6 @@ using Unity.Entities;
 
 namespace AdvancedForestBrush
 {
-    // The game's vegetation bar only keeps its current page's selection.
-    // Keep a separate palette so changing pages does not discard earlier species.
     public static class ForestSpeciesPalette
     {
         public static bool Active;

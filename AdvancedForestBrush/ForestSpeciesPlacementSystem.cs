@@ -9,8 +9,6 @@ using Unity.Mathematics;
 
 namespace AdvancedForestBrush
 {
-    // Runs after Tree Controller's early Modification1 pass, so the saved
-    // species is the final prefab used by the game's placement consumers.
     public partial class ForestSpeciesPlacementSystem : GameSystemBase
     {
         private EntityQuery m_Definitions;
