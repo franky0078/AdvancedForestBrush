@@ -51,8 +51,13 @@ namespace AdvancedForestBrush
 
                 uint hash = math.hash(new uint3(math.asuint(definition.m_Position.x),
                     math.asuint(definition.m_Position.z), (uint)creation.m_RandomSeed));
-                Entity replacement = ForestSpeciesPalette.Prefabs[
-                    (int)(hash % (uint)ForestSpeciesPalette.Prefabs.Count)];
+                Entity replacement = ForestSpeciesPalette.Select(hash);
+                if (replacement == Entity.Null)
+                {
+                    // Do not fall back to the game's selection when all entries are disabled.
+                    EntityManager.DestroyEntity(entity);
+                    continue;
+                }
                 if (!EntityManager.Exists(replacement) ||
                     (!EntityManager.HasComponent<PlantData>(replacement) &&
                      !EntityManager.HasComponent<TreeData>(replacement)))

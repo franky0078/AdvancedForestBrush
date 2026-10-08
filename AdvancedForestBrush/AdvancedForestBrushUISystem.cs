@@ -35,6 +35,7 @@ namespace AdvancedForestBrush
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "IsVisible", IsVegetationContext));
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "PanelVisible", () => ForestBrushState.PanelVisible));
             AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesPalette", () => ForestSpeciesPalette.NamesJson));
+            AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesWeights", () => ForestSpeciesPalette.WeightsJson));
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "SpeciesPaletteActive", () => ForestSpeciesPalette.Active));
             AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "PaletteWindowLayout", () =>
                 $"{Mod.Settings?.PaletteWindowLeft ?? -1},{Mod.Settings?.PaletteWindowTop ?? -1},{Mod.Settings?.PaletteWindowHeight ?? 320}"));
@@ -58,6 +59,7 @@ namespace AdvancedForestBrush
             AddBinding(new TriggerBinding(Mod.Id, "ToggleSpeciesPalette", () => ForestSpeciesPalette.Active = !ForestSpeciesPalette.Active));
             AddBinding(new TriggerBinding<string>(Mod.Id, "SavePaletteWindowLayout", SavePaletteWindowLayout));
             AddBinding(new TriggerBinding<int>(Mod.Id, "RemoveSpecies", ForestSpeciesPalette.Remove));
+            AddBinding(new TriggerBinding<int, int>(Mod.Id, "SetSpeciesWeight", ForestSpeciesPalette.SetWeight));
             AddBinding(new TriggerBinding(Mod.Id, "ClearSpecies", ForestSpeciesPalette.Clear));
             AddBinding(new TriggerBinding<int>(Mod.Id, "SetDensity", value => ForestBrushState.SetDensity(value)));
             AddBinding(new TriggerBinding<int>(Mod.Id, "StepDensity", direction => ForestBrushState.StepDensity(direction)));

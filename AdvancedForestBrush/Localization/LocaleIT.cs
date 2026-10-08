@@ -112,6 +112,8 @@ namespace AdvancedForestBrush.Localization
                 { "AdvancedForestBrush.UI.CloseSpeciesPalette", "Usa selezione del gioco" },
                 { "AdvancedForestBrush.UI.AddSpecies", "Aggiungi pianta selezionata" },
                 { "AdvancedForestBrush.UI.ClearSpecies", "Svuota elenco" },
+                { "AdvancedForestBrush.UI.SpeciesWeight", "Frequenza" },
+                { "AdvancedForestBrush.UI.SpeciesWeightTooltip", "Peso relativo di selezione (0–100). Valori più alti selezionano questa pianta più spesso. 0 la disattiva. La somma non deve essere 100. Se tutti i valori sono 0, non viene piantato nulla." },
                 { "AdvancedForestBrush.UI.RemoveSpecies", "Rimuovi" },
                 { "AdvancedForestBrush.UI.SpeciesHint", "Ctrl + clic sinistro su una pianta nella barra per aggiungerla, oppure selezionala e usa Aggiungi pianta selezionata. Scorri per aggiungerne altre. Puoi cambiare la combinazione nelle opzioni. Un elenco vuoto usa la selezione del gioco." },
                 { "AdvancedForestBrush.UI.ResizeSpeciesPalette", "Ridimensiona elenco delle piante" },

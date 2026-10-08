@@ -36,6 +36,7 @@ Advanced Forest Brush uses the Tree Controller age selection
 - Movable and rotatable completed polygons
 - Species Grouping – Places selected tree species in natural-looking patches
 - Optional species list for mixing plants from different pages of the vegetation bar
+- Plant Frequency species list option for controlling the frequency of each plant in the list
 - Support for the game and editor
 - English, German, Spanish, Italian, French localization
 

@@ -12,6 +12,7 @@ import { VanillaComponentResolver } from "./VanillaComponentResolver";
 const visible$ = bindValue<boolean>(mod.id, "IsVisible");
 const panelVisible$ = bindValue<boolean>(mod.id, "PanelVisible");
 const speciesPalette$ = bindValue<string>(mod.id, "SpeciesPalette");
+const speciesWeights$ = bindValue<string>(mod.id, "SpeciesWeights");
 const speciesPaletteActive$ = bindValue<boolean>(mod.id, "SpeciesPaletteActive");
 const paletteWindowLayout$ = bindValue<string>(mod.id, "PaletteWindowLayout");
 const currentSpecies$ = bindValue<string>(mod.id, "CurrentSpecies");
@@ -173,11 +174,45 @@ const NumberControl = ({
         : row;
 };
 
+const SpeciesWeightInput = ({ name, label, tooltip, value, onChange }: {
+    name: string; label: string; tooltip: string; value: number; onChange: (value: number) => void;
+}) => {
+    const [draft, setDraft] = useState<string | null>(null);
+    return <label className={styles.speciesWeight} title={tooltip}>
+        <span>{label}</span>
+        <input type="number" min={0} max={100} step={1}
+            aria-label={`${label}: ${name}`} value={draft ?? String(value)}
+            onFocus={() => setDraft(String(value))}
+            onChange={event => setDraft(event.currentTarget.value)}
+            onBlur={event => {
+                const text = event.currentTarget.value.trim();
+                const next = Number(text);
+                setDraft(null);
+                if (text !== "" && Number.isFinite(next)) onChange(Math.max(0, Math.min(100, Math.round(next))));
+            }}
+            onKeyDown={event => {
+                if (event.key === "Enter") event.currentTarget.blur();
+                if (event.key === "Escape") {
+                    event.currentTarget.value = String(value);
+                    event.currentTarget.blur();
+                }
+                event.stopPropagation();
+            }}
+        />
+    </label>;
+};
+
 export const AdvancedForestBrushPanel = () => {
     const { translate } = useLocalization();
     const visible = useValue(visible$);
     const panelVisible = useValue(panelVisible$);
     const speciesPaletteJson = useValue(speciesPalette$);
+    const speciesWeightsJson = useValue(speciesWeights$);
+    let speciesWeights: number[] = [];
+    try {
+        const parsed = JSON.parse(speciesWeightsJson || "[]");
+        if (Array.isArray(parsed)) speciesWeights = parsed;
+    } catch { /* Keep default weights while bindings initialize. */ }
     const speciesPaletteActive = useValue(speciesPaletteActive$);
     const paletteWindowLayout = useValue(paletteWindowLayout$);
     const currentSpecies = useValue(currentSpecies$);
@@ -237,6 +272,8 @@ export const AdvancedForestBrushPanel = () => {
         addSpecies: loc("AddSpecies", "Add current plant"),
         clearSpecies: loc("ClearSpecies", "Clear list"),
         removeSpecies: loc("RemoveSpecies", "Remove"),
+        speciesWeight: loc("SpeciesWeight", "Frequency"),
+        speciesWeightTip: loc("SpeciesWeightTooltip", "Relative selection weight (0–100). Higher values select this plant more often. 0 disables it. Values do not need to add up to 100. If all values are 0, nothing is placed."),
         speciesHint: loc("SpeciesHint", "Ctrl + left-click a plant in the vegetation bar to add it, or select it and use Add current plant. The shortcut can be changed in Options. An empty list uses the game's selection."),
         resizeSpecies: loc("ResizeSpeciesPalette", "Resize species list"),
         speciesGrouping: loc("SpeciesGrouping", "Species grouping"),
@@ -809,7 +846,9 @@ export const AdvancedForestBrushPanel = () => {
                     </div>
                     <div className={styles.paletteList}>
                         {speciesPalette.map((name, index) => <div className={styles.paletteItem} key={`${name}-${index}`}>
-                            <span title={name}>{name}</span>
+                            <span className={styles.speciesName} title={name}>{name}</span>
+                            <SpeciesWeightInput key={name} name={name} label={t.speciesWeight} tooltip={t.speciesWeightTip}
+                                value={speciesWeights[index] ?? 100} onChange={value => fire("SetSpeciesWeight", index, value)} />
                             <button type="button" title={t.removeSpecies} aria-label={`${t.removeSpecies}: ${name}`} onClick={() => fire("RemoveSpecies", index)}>×</button>
                         </div>)}
                     </div>

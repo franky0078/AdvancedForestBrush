@@ -112,6 +112,8 @@ namespace AdvancedForestBrush.Localization
                 { "AdvancedForestBrush.UI.CloseSpeciesPalette", "Utiliser la sélection du jeu" },
                 { "AdvancedForestBrush.UI.AddSpecies", "Ajouter le végétal sélectionné" },
                 { "AdvancedForestBrush.UI.ClearSpecies", "Vider la liste" },
+                { "AdvancedForestBrush.UI.SpeciesWeight", "Fréquence" },
+                { "AdvancedForestBrush.UI.SpeciesWeightTooltip", "Poids relatif de sélection (0–100). Une valeur plus élevée sélectionne cette plante plus souvent. 0 la désactive. La somme ne doit pas nécessairement être égale à 100. Si toutes les valeurs sont à 0, rien ne sera planté." },
                 { "AdvancedForestBrush.UI.RemoveSpecies", "Retirer" },
                 { "AdvancedForestBrush.UI.SpeciesHint", "Ctrl + clic gauche sur un végétal dans la barre pour l'ajouter, ou sélectionnez-le puis cliquez sur Ajouter le végétal sélectionné. Faites défiler pour en ajouter d'autres. Modifiez le raccourci dans les options. Une liste vide utilise la sélection du jeu." },
                 { "AdvancedForestBrush.UI.ResizeSpeciesPalette", "Redimensionner la liste des végétaux" },
