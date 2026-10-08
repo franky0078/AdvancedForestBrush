@@ -100,14 +100,14 @@
 	<Screenshot Value="Properties/Screenshot05.jpg" />
 	<Screenshot Value="Properties/Screenshot06.jpg" />
 	<Screenshot Value="Properties/Screenshot07.jpg" />
-	<!--<Screenshot Value="Properties/Screenshot08.jpg" />
-	<Screenshot Value="Properties/Screenshot09.jpg" /> -->
+	<Screenshot Value="Properties/Screenshot08.jpg" />
+	<!--<Screenshot Value="Properties/Screenshot09.jpg" /> -->
 
 	<Tag Value="Code Mod" />
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="1.0.0" />
+	<ModVersion Value="1.0.1" />
 	<GameVersion Value="1.6.*" />
 
 	
@@ -117,7 +117,7 @@
 	<ChangeLog>
 		## Latest changes
 
-		- Added individual frequency settings for each plant in the vegetation list.
+		- Added asset icons for each plant in the vegetation list.
 	</ChangeLog>
 
 	<!--Optional external links for your own mod.-->

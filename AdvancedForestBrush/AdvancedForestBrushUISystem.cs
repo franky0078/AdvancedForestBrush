@@ -35,6 +35,7 @@ namespace AdvancedForestBrush
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "IsVisible", IsVegetationContext));
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "PanelVisible", () => ForestBrushState.PanelVisible));
             AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesPalette", () => ForestSpeciesPalette.NamesJson));
+            AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesIcons", () => ForestSpeciesPalette.IconsJson));
             AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesWeights", () => ForestSpeciesPalette.WeightsJson));
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "SpeciesPaletteActive", () => ForestSpeciesPalette.Active));
             AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "PaletteWindowLayout", () =>
@@ -151,7 +152,11 @@ namespace AdvancedForestBrush
             if (IsVegetationContext() &&
                 m_PrefabSystem.TryGetEntity(m_ToolSystem.activePrefab, out Entity entity))
             {
-                ForestSpeciesPalette.Add(entity, m_ToolSystem.activePrefab.name);
+                // Resolve the game's asset thumbnail once when adding the entry.
+                var prefab = m_ToolSystem.activePrefab;
+                string icon = ImageSystem.GetThumbnail(prefab);
+                if (string.IsNullOrEmpty(icon)) icon = ImageSystem.GetIcon(prefab);
+                ForestSpeciesPalette.Add(entity, prefab.name, icon);
             }
         }
 

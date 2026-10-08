@@ -12,6 +12,7 @@ import { VanillaComponentResolver } from "./VanillaComponentResolver";
 const visible$ = bindValue<boolean>(mod.id, "IsVisible");
 const panelVisible$ = bindValue<boolean>(mod.id, "PanelVisible");
 const speciesPalette$ = bindValue<string>(mod.id, "SpeciesPalette");
+const speciesIcons$ = bindValue<string>(mod.id, "SpeciesIcons");
 const speciesWeights$ = bindValue<string>(mod.id, "SpeciesWeights");
 const speciesPaletteActive$ = bindValue<boolean>(mod.id, "SpeciesPaletteActive");
 const paletteWindowLayout$ = bindValue<string>(mod.id, "PaletteWindowLayout");
@@ -202,11 +203,26 @@ const SpeciesWeightInput = ({ name, label, tooltip, value, onChange }: {
     </label>;
 };
 
+const SpeciesIcon = ({ src }: { src: string }) => {
+    const [failedSrc, setFailedSrc] = useState<string | null>(null);
+    return <span className={styles.speciesIcon} aria-hidden="true">
+        {src && failedSrc !== src ? <img src={src} alt="" onError={() => setFailedSrc(src)} /> : (
+            <svg viewBox="0 0 24 24"><path d="M12 2 5 11h3l-4 6h7v5h2v-5h7l-4-6h3L12 2Z" /></svg>
+        )}
+    </span>;
+};
+
 export const AdvancedForestBrushPanel = () => {
     const { translate } = useLocalization();
     const visible = useValue(visible$);
     const panelVisible = useValue(panelVisible$);
     const speciesPaletteJson = useValue(speciesPalette$);
+    const speciesIconsJson = useValue(speciesIcons$);
+    let speciesIcons: string[] = [];
+    try {
+        const parsed = JSON.parse(speciesIconsJson || "[]");
+        if (Array.isArray(parsed)) speciesIcons = parsed.map(item => typeof item === "string" ? item : "");
+    } catch { /* Keep placeholders while bindings initialize. */ }
     const speciesWeightsJson = useValue(speciesWeights$);
     let speciesWeights: number[] = [];
     try {
@@ -846,6 +862,7 @@ export const AdvancedForestBrushPanel = () => {
                     </div>
                     <div className={styles.paletteList}>
                         {speciesPalette.map((name, index) => <div className={styles.paletteItem} key={`${name}-${index}`}>
+                            <SpeciesIcon src={speciesIcons[index] ?? ""} />
                             <span className={styles.speciesName} title={name}>{name}</span>
                             <SpeciesWeightInput key={name} name={name} label={t.speciesWeight} tooltip={t.speciesWeightTip}
                                 value={speciesWeights[index] ?? 100} onChange={value => fire("SetSpeciesWeight", index, value)} />

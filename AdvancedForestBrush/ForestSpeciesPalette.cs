@@ -5,11 +5,13 @@ using Unity.Entities;
 
 namespace AdvancedForestBrush
 {
+
     public static class ForestSpeciesPalette
     {
         public static bool Active;
         public static readonly List<Entity> Prefabs = new List<Entity>();
         public static readonly List<string> Names = new List<string>();
+        private static readonly List<string> Icons = new List<string>();
         private static readonly List<int> Weights = new List<int>();
         private static int TotalWeight;
 
@@ -36,32 +38,33 @@ namespace AdvancedForestBrush
             return Entity.Null;
         }
 
-        public static string NamesJson
+        public static string NamesJson => StringListJson(Names);
+        public static string IconsJson => StringListJson(Icons);
+
+        private static string StringListJson(List<string> values)
         {
-            get
+            var json = new StringBuilder("[");
+            for (int i = 0; i < values.Count; i++)
             {
-                var json = new StringBuilder("[");
-                for (int i = 0; i < Names.Count; i++)
+                if (i > 0) json.Append(',');
+                json.Append('"');
+                foreach (char c in values[i])
                 {
-                    if (i > 0) json.Append(',');
-                    json.Append('"');
-                    foreach (char c in Names[i])
-                    {
-                        if (c == '"' || c == '\\') json.Append('\\');
-                        if (c < 32) json.Append(' ');
-                        else json.Append(c);
-                    }
-                    json.Append('"');
+                    if (c == '"' || c == '\\') json.Append('\\');
+                    if (c < 32) json.Append(' ');
+                    else json.Append(c);
                 }
-                return json.Append(']').ToString();
+                json.Append('"');
             }
+            return json.Append(']').ToString();
         }
 
-        public static void Add(Entity prefab, string name)
+        public static void Add(Entity prefab, string name, string icon)
         {
             if (prefab == Entity.Null || Prefabs.Contains(prefab)) return;
             Prefabs.Add(prefab);
             Names.Add(name);
+            Icons.Add(icon ?? "");
             Weights.Add(100);
             TotalWeight += 100;
         }
@@ -73,12 +76,14 @@ namespace AdvancedForestBrush
             Weights.RemoveAt(index);
             Prefabs.RemoveAt(index);
             Names.RemoveAt(index);
+            Icons.RemoveAt(index);
         }
 
         public static void Clear()
         {
             Prefabs.Clear();
             Names.Clear();
+            Icons.Clear();
             Weights.Clear();
             TotalWeight = 0;
         }
