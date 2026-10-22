@@ -1,6 +1,6 @@
 # Advanced Forest Brush
 
-Advanced Forest Brush expands vegetation placement in Cities: Skylines II
+Advanced Forest Brush expands vegetation placement
 
 
 <p align="center">
@@ -41,6 +41,15 @@ Advanced Forest Brush uses the Tree Controller age selection
 - Plant Frequency species list option for controlling the frequency of each plant in the list
 - Support for the game and editor
 - English, German, Spanish, Italian, French localization
+
+
+## Forest along paths
+
+- Build your roads and paths first, then paint a natural forest around them.
+- Works with existing ground-level roads and paths and all supported brush shapes.
+- Adjust the clear roadside verge, forest width and edge transition.
+- Control clearing size and frequency.
+- Use a seed to keep a pattern consistent, or select Reroll to generate a different layout.
 
 
 ## How to use

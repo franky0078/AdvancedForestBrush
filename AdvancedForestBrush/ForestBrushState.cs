@@ -40,11 +40,21 @@ namespace AdvancedForestBrush
         public static int SpeciesGrouping;
         public static int Seed = 1977;
 
+        public static bool PathForest;
+        public static int PathGap = 4;
+        public static int PathWidth = 100;
+        public static int PathTransition = 20;
+        public static int PathClearings = 25;
+        public static int PathClearingSize = 60;
+        public static int PathSeed = 1977;
+
         public static ForestBrushShape Shape = ForestBrushShape.Circle;
         public static int ShapeWidth = 100;
         public static int ShapeLength = 150;
         public static float RotationDegrees;
         public static float CircleBrushSize = 100f;
+        // Matches Tree Controller's Constrain Brush radius and the visible game brush.
+        public static float CircleBrushRadius => math.max(10f, CircleBrushSize) * 0.333f;
         public static float3 CursorPosition;
         public static bool HasValidCursor;
         public static bool PolygonClosed;
@@ -167,6 +177,20 @@ namespace AdvancedForestBrush
             PolygonVersion++;
         }
 
+        internal static float PlacementRandom(float3 position, uint seed)
+        {
+            unchecked
+            {
+                uint value = math.hash(new uint3(math.asuint(position.x), math.asuint(position.z), seed));
+                value ^= value >> 16;
+                value *= 0x7feb352du;
+                value ^= value >> 15;
+                value *= 0x846ca68bu;
+                value ^= value >> 16;
+                return (value & 0x00ffffffu) / 16777216f;
+            }
+        }
+
         public static bool Contains(float3 worldPosition)
         {
             return HasValidCursor && Contains(worldPosition, CursorPosition);
@@ -178,7 +202,7 @@ namespace AdvancedForestBrush
 
             if (Shape == ForestBrushShape.Circle)
             {
-                return true;
+                return math.distancesq(point, shapeCenter.xz) <= CircleBrushRadius * CircleBrushRadius;
             }
 
             float2 offset = point - new float2(shapeCenter.x, shapeCenter.z);

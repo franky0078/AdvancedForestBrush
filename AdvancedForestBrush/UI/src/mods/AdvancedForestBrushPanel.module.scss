@@ -15,26 +15,27 @@
 .anarchyIcon { position:relative; display:block; width:21rem; height:21rem; pointer-events:none; }
 .anarchyIcon svg,.anarchyIcon img { position:absolute; inset:0; width:100%; height:100%; display:block; }
 .backButton svg { width:21rem; height:21rem; fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-.content { padding:5rem 8rem 8rem; }
-.settingRow,.distributionRow { display:flex; align-items:center; justify-content:space-between; min-height:34rem; gap:8rem; }
+.content { padding:5rem 8rem 8rem; max-height:62vh; overflow-y:auto; }
+.settingRow,.distributionRow { display:flex; align-items:center; justify-content:space-between; min-height:31rem; gap:8rem; }
 .settingLabel { flex:0 0 116rem; margin:0; font-size:14rem; font-weight:700; }
-.numberControl { display:flex; align-items:stretch; width:164rem; height:30rem; overflow:hidden; border-radius:3rem; background:rgba(4,10,15,.82); }
-.numberControl button { display:flex; align-items:center; justify-content:center; width:34rem; padding:0; border:0; background:rgba(2,8,12,.95); color:#f4f7f8; }
+.numberControl { display:flex; align-items:stretch; flex:0 0 112rem; width:112rem; height:25rem; overflow:hidden; border-radius:3rem; background:rgba(4,10,15,.82); }
+.numberControl button { display:flex; align-items:center; justify-content:center; flex:0 0 25rem; width:25rem; padding:0; border:0; background:rgba(2,8,12,.95); color:#f4f7f8; }
 .numberControl button:hover { background:rgba(58,89,108,.9); }
 .numberControl button:disabled { color:rgba(244,247,248,.35); }
 .numberControl button svg { width:19rem; height:19rem; fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
 .numberValue { display:flex; flex:1; align-items:center; justify-content:center; min-width:0; background:rgba(77,103,56,.42); }
-.numberValue input { width:58rem; min-width:0; padding:0; border:0; outline:0; background:transparent; color:#fff; text-align:right; font-size:14rem; }
-.numberValue span { min-width:19rem; padding-left:3rem; color:#fff; font-size:13rem; }
+.numberValue input { width:43rem; min-width:0; padding:0; border:0; outline:0; background:transparent; color:#fff; text-align:right; font-size:14rem; }
+.numberValue span { min-width:14rem; padding-left:2rem; color:#fff; font-size:13rem; }
 .divider { height:1rem; margin:5rem 0; background:rgba(190,213,232,.18); }
 .distributionRow { align-items:flex-start; }
-.distributionRow .settingLabel { padding-top:7rem; }
-.iconRow { display:flex; flex:1; gap:4rem; }
-.iconButton { position:relative; flex:1 1 0; min-width:0; height:30rem; overflow:visible; }
-.iconButton svg { width:21rem; height:21rem; fill:currentColor; }
-.groupingRow { display:flex; flex:1; gap:4rem; min-width:0; }
-.groupingSlot { flex:1 1 0; min-width:0; }
-.groupingButton { width:100%; min-width:0; height:30rem; padding:0 2rem; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#f0f6fa; font-size:11rem; white-space:nowrap; }
+.distributionRow .settingLabel { padding-top:5rem; }
+.iconRow { display:flex; flex:1; justify-content:flex-end; gap:3rem; }
+.iconRow > * { flex:0 0 28rem; width:28rem; }
+.iconButton { position:relative; flex:0 0 28rem; width:28rem; min-width:28rem; height:28rem; overflow:visible; }
+.iconButton svg { width:20rem; height:20rem; fill:currentColor; }
+.groupingRow { display:flex; flex:1; justify-content:flex-end; gap:3rem; min-width:0; }
+.groupingSlot { flex:0 1 auto; min-width:0; }
+.groupingButton { width:100%; min-width:0; height:28rem; padding:0 5rem; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#f0f6fa; font-size:11rem; white-space:nowrap; }
 .groupingButton:hover { background:rgba(58,89,108,.9); }
 .selected { border-color:#7be49b; background:linear-gradient(#318e58,#176a38); }
 .noiseSettings { display:flex; flex-direction:column; gap:2rem; margin-top:3rem; }
@@ -56,7 +57,8 @@
 .speciesIcon { display:flex; flex:0 0 36rem; width:36rem; height:36rem; align-items:center; justify-content:center; overflow:hidden; border-radius:3rem; background:rgba(5,13,18,.35); pointer-events:none !important; }
 .speciesIcon img { display:block; width:100%; height:100%; object-fit:contain; pointer-events:none !important; }
 .speciesIcon svg { width:22rem; height:22rem; fill:rgba(190,213,200,.7); pointer-events:none !important; }
-.paletteToggle { width:100%; min-height:30rem; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#f0f6fa; cursor:pointer; font-size:12rem; }
+.paletteToggle { display:block; width:auto; max-width:100%; margin-left:auto; min-height:27rem; padding:3rem 9rem; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#f0f6fa; cursor:pointer; font-size:12rem; }
+.paletteToggle.selected { border-color:#7be49b; background:linear-gradient(#318e58,#176a38); }
 .paletteToggle:hover { background:rgba(58,89,108,.9); }
 .paletteWindow { position:fixed !important; display:flex !important; flex-direction:column !important; right:auto !important; bottom:auto !important; width:345rem !important; min-width:345rem !important; max-width:345rem !important; min-height:230px; box-sizing:border-box; padding:0 !important; overflow:hidden !important; z-index:200 !important; pointer-events:auto !important; color:#eaf1f5; border:1rem solid rgba(190,213,232,.25); border-radius:8rem; background:rgba(72,94,83,.66); backdrop-filter:blur(12rem); -webkit-backdrop-filter:blur(12rem); box-shadow:0 8rem 25rem rgba(0,0,0,.4); }
 .paletteWindow * { pointer-events:auto !important; }
@@ -70,3 +72,21 @@
 .speciesWeight { display:flex; flex-shrink:0; align-items:center; gap:4rem; font-size:10rem; }
 .speciesWeight input { width:38rem; padding:2rem 3rem; border:1rem solid rgba(190,213,232,.25); border-radius:3rem; background:rgba(5,13,18,.82); color:#f0f6fa; font-size:12rem; text-align:center; }
 .speciesWeight input:focus { border-color:rgba(190,213,232,.8); }
+
+// Explicit pairs prevent tooltip wrappers or flex wrapping from creating extra columns.
+.pathControlsGrid { display:flex; flex-direction:column; width:100%; }
+.pathControlsPair { display:flex; flex-direction:row; width:100%; margin-bottom:5rem; }
+.pathControlCell { flex:0 0 163rem; width:163rem; min-width:163rem; }
+.pathControlCell + .pathControlCell { margin-left:8rem; }
+.pathControlCell .settingRow { flex-direction:column; align-items:stretch; width:163rem; gap:2rem; }
+.pathControlCell .settingLabel { flex:0 0 auto; width:163rem; font-size:12rem; line-height:15rem; font-weight:600; }
+.pathControlCell .numberControl { flex:0 0 25rem; width:112rem; height:25rem; }
+.pathControlCell .numberValue input { flex:0 0 43rem; width:43rem; min-width:43rem; font-size:13rem; }
+.pathControlCell .numberValue span:empty { display:none; }
+
+.seedControlCell .numberControl { width:128rem; }
+.seedControlCell .numberValue input { flex:0 0 68rem; width:68rem; min-width:68rem; }
+
+.vegetationActions { display:flex; align-items:stretch; width:100%; margin:0 0 6rem; }
+.vegetationActions .paletteToggle { flex:1 1 0; width:0; min-width:0; margin:0; padding:3rem 5rem; white-space:normal; }
+.vegetationActions .paletteToggle + .paletteToggle { margin-left:6rem; }

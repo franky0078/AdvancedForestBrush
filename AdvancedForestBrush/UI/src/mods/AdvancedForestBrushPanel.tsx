@@ -17,6 +17,15 @@ const speciesWeights$ = bindValue<string>(mod.id, "SpeciesWeights");
 const speciesPaletteActive$ = bindValue<boolean>(mod.id, "SpeciesPaletteActive");
 const paletteWindowLayout$ = bindValue<string>(mod.id, "PaletteWindowLayout");
 const currentSpecies$ = bindValue<string>(mod.id, "CurrentSpecies");
+const pathForest$ = bindValue<boolean>(mod.id, "PathForest");
+const pathCount$ = bindValue<number>(mod.id, "PathCount");
+const pathGap$ = bindValue<number>(mod.id, "PathGap");
+const pathWidth$ = bindValue<number>(mod.id, "PathWidth");
+const pathTransition$ = bindValue<number>(mod.id, "PathTransition");
+const pathClearings$ = bindValue<number>(mod.id, "PathClearings");
+const pathClearingSize$ = bindValue<number>(mod.id, "PathClearingSize");
+const pathSeed$ = bindValue<number>(mod.id, "PathSeed");
+const randomVegetationRotation$ = bindValue<boolean>(mod.id, "RandomVegetationRotation");
 const density$ = bindValue<number>(mod.id, "Density");
 const noiseMode$ = bindValue<number>(mod.id, "NoiseMode");
 const noiseScale$ = bindValue<number>(mod.id, "NoiseScale");
@@ -237,6 +246,14 @@ export const AdvancedForestBrushPanel = () => {
         const parsed = JSON.parse(speciesPaletteJson || "[]");
         if (Array.isArray(parsed)) speciesPalette = parsed.filter((item): item is string => typeof item === "string");
     } catch { /* The backend will send a fresh palette on its next update. */ }
+    const pathForest = useValue(pathForest$);
+    const pathCount = useValue(pathCount$);
+    const pathGap = useValue(pathGap$);
+    const pathWidth = useValue(pathWidth$);
+    const pathTransition = useValue(pathTransition$);
+    const pathClearings = useValue(pathClearings$);
+    const pathClearingSize = useValue(pathClearingSize$);
+    const pathSeed = useValue(pathSeed$);
     const density = useValue(density$);
     const noiseMode = useValue(noiseMode$);
     const noiseScale = useValue(noiseScale$);
@@ -246,6 +263,7 @@ export const AdvancedForestBrushPanel = () => {
     const anarchyEnabled = useValue(anarchyEnabled$) === true;
     const [loadedAnarchyIcon, setLoadedAnarchyIcon] = useState<string | null>(null);
     const [failedAnarchyIcon, setFailedAnarchyIcon] = useState<string | null>(null);
+    const randomVegetationRotation = useValue(randomVegetationRotation$);
     const preserveAge = useValue(toolbar.decorationMode$);
     const shape = useValue(shape$);
     const shapeWidth = useValue(shapeWidth$);
@@ -260,6 +278,23 @@ export const AdvancedForestBrushPanel = () => {
         translate("Toolbar.TOOL_MODE_TITLE", "Tool Mode") ?? "Tool Mode";
 
     const t = {
+        pathForest: loc("PathForest", "Forest along paths"),
+        pathForestHint: loc("PathForestHint", "Paint around existing ground-level roads and paths with the selected shape. Enable the detailed forest preview in Options if desired. Right-click erases vegetation."),
+        pathGap: loc("PathGap", "Free verge"),
+        pathWidth: loc("PathWidth", "Forest width"),
+        pathTransition: loc("PathTransition", "Transition"),
+        pathClearings: loc("PathClearings", "Clearings"),
+        pathClearingSize: loc("PathClearingSize", "Clearing size"),
+        pathSeed: loc("PathSeed", "Seed"),
+        pathReroll: loc("PathReroll", "Reroll"),
+        pathNone: loc("PathNone", "No ground-level roads or paths nearby."),
+        pathDetected: loc("PathDetected", "Nearby road/path segments"),
+        pathGapTip: loc("PathGapTip", "Free distance from the road or path edge to tree positions. Increase it for trees with wide crowns."),
+        pathWidthTip: loc("PathWidthTip", "Maximum forest extent beyond the free verge, on both sides of each road or path."),
+        pathTransitionTip: loc("PathTransitionTip", "Gradual density increase at the verge and decrease at the outer forest edge."),
+        pathClearingsTip: loc("PathClearingsTip", "Strength of the clearing pattern; not an exact percentage of empty land. 0 disables clearings."),
+        pathClearingSizeTip: loc("PathClearingSizeTip", "Approximate scale of connected clearings in metres."),
+        pathSeedTip: loc("PathSeedTip", "Keeps the forest pattern fixed in world space. Changing the seed affects new placements only."),
         title: loc("Title", "Advanced Forest Brush"),
         open: loc("Open", "Open Advanced Forest Brush"),
         close: loc("Close", "Close Advanced Forest Brush"),
@@ -292,8 +327,10 @@ export const AdvancedForestBrushPanel = () => {
         speciesWeightTip: loc("SpeciesWeightTooltip", "Relative selection weight (0–100). Higher values select this plant more often. 0 disables it. Values do not need to add up to 100. If all values are 0, nothing is placed."),
         speciesHint: loc("SpeciesHint", "Ctrl + left-click a plant in the vegetation bar to add it, or select it and use Add current plant. The shortcut can be changed in Options. An empty list uses the game's selection."),
         resizeSpecies: loc("ResizeSpeciesPalette", "Resize Vegetation List"),
-        speciesGrouping: loc("SpeciesGrouping", "Species grouping"),
-        speciesGroupingTip: loc("SpeciesGroupingTooltip", "Groups the selected tree species into patches. Stronger grouping leaves fewer trees; adjust density if needed."),
+        randomRotation: loc("RandomVegetationRotation", "Random rotation"),
+        randomRotationTip: loc("RandomVegetationRotationTooltip", "Randomly rotates newly placed vegetation around its vertical axis in all brush shapes and both forest modes."),
+        speciesGrouping: loc("SpeciesGrouping", "Vegetation grouping"),
+        speciesGroupingTip: loc("SpeciesGroupingTooltip", "Groups the selected vegetation into patches. Stronger grouping leaves fewer trees; adjust density if needed."),
         groupingLevels: [loc("GroupingOff", "Off"), loc("GroupingWeak", "Weak"), loc("GroupingMedium", "Medium"), loc("GroupingStrong", "Strong")],
         noiseSize: loc("NoiseSize", "Noise size"),
         noiseSizeTip: loc("NoiseSizeTooltip", "Controls the size of the noise pattern."),
@@ -402,9 +439,6 @@ export const AdvancedForestBrushPanel = () => {
             if (event.button !== 0 || !(event.target instanceof Element) ||
                 panelRef.current?.contains(event.target) ||
                 paletteRef.current?.contains(event.target)) return;
-
-            // The game's vegetation tiles are square controls in the lower asset bar.
-            // Check the clicked control, not the entire toolbar or other UI panels.
             let candidate: HTMLElement | null = event.target instanceof HTMLElement
                 ? event.target : event.target.parentElement;
             for (let depth = 0; candidate && depth < 5; depth++, candidate = candidate.parentElement) {
@@ -708,6 +742,11 @@ export const AdvancedForestBrushPanel = () => {
                     </div>
 
                     <div className={styles.content}>
+                        <button type="button"
+                            className={classNames(styles.paletteToggle, pathForest && styles.selected)}
+                            aria-pressed={pathForest}
+                            onClick={() => fire("TogglePathForest")}>{t.pathForest}</button>
+                        <div className={styles.divider} />
                         <div className={styles.distributionRow}>
                             <div className={styles.settingLabel}>{t.shape}</div>
                             <div className={styles.iconRow}>
@@ -760,14 +799,6 @@ export const AdvancedForestBrushPanel = () => {
                         <NumberControl label={t.density} value={density} min={10} max={300} step={density < 100 ? 5 : 10} unit="%" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetDensity", value)} />
 
                         <div className={styles.divider} />
-                        <button
-                            type="button"
-                            className={classNames(styles.paletteToggle, speciesPaletteActive && styles.selected)}
-                            aria-pressed={speciesPaletteActive}
-                            onClick={togglePalette}
-                        >{speciesPaletteActive ? t.closeSpecies : t.openSpecies}</button>
-
-                        <div className={styles.divider} />
                         <div className={styles.distributionRow}>
                             <div className={styles.settingLabel}>{t.treeAge}</div>
                             <div className={styles.iconRow}>
@@ -789,19 +820,55 @@ export const AdvancedForestBrushPanel = () => {
                         </div>
 
                         <div className={styles.divider} />
-                        <div className={styles.distributionRow}>
+                        <div className={styles.vegetationActions}>
+                        <button
+                            type="button"
+                            className={classNames(styles.paletteToggle, speciesPaletteActive && styles.selected)}
+                            aria-pressed={speciesPaletteActive}
+                            onClick={togglePalette}
+                        >{speciesPaletteActive ? t.closeSpecies : t.openSpecies}</button>
+                        <button type="button"
+                            className={classNames(styles.paletteToggle, randomVegetationRotation && styles.selected)}
+                            aria-pressed={randomVegetationRotation}
+                            title={t.randomRotationTip}
+                            onClick={() => fire("ToggleRandomVegetationRotation")}
+                        >{t.randomRotation}</button>
+                        </div>
+
+                        {pathForest && <div className={styles.noiseSettings}>
+                            <div className={styles.hint}>{t.pathForestHint}</div>
+                            <div className={styles.hint} role="status">{pathCount > 0
+                                ? `${t.pathDetected}: ${pathCount}` : t.pathNone}</div>
+                            <div className={styles.pathControlsGrid}>
+                                <div className={styles.pathControlsPair}>
+                                    <div className={styles.pathControlCell}><NumberControl label={t.pathGap} value={pathGap} min={0} max={50} step={1} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathGapTip} onChange={value => fire("SetPathGap", value)} /></div>
+                                    <div className={styles.pathControlCell}><NumberControl label={t.pathWidth} value={pathWidth} min={10} max={300} step={10} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathWidthTip} onChange={value => fire("SetPathWidth", value)} /></div>
+                                </div>
+                                <div className={styles.pathControlsPair}>
+                                    <div className={styles.pathControlCell}><NumberControl label={t.pathTransition} value={pathTransition} min={1} max={100} step={1} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathTransitionTip} onChange={value => fire("SetPathTransition", value)} /></div>
+                                    <div className={styles.pathControlCell}><NumberControl label={t.pathClearings} value={pathClearings} min={0} max={80} step={5} unit="%" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathClearingsTip} onChange={value => fire("SetPathClearings", value)} /></div>
+                                </div>
+                                <div className={styles.pathControlsPair}>
+                                    <div className={styles.pathControlCell}><NumberControl label={t.pathClearingSize} value={pathClearingSize} min={10} max={200} step={5} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathClearingSizeTip} onChange={value => fire("SetPathClearingSize", value)} /></div>
+                                    <div className={classNames(styles.pathControlCell, styles.seedControlCell)}><NumberControl label={t.pathSeed} value={pathSeed} min={1} max={999999} step={1} unit="" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathSeedTip} onChange={value => fire("SetPathSeed", value)} /></div>
+                                </div>
+                            </div>
+                            <button type="button" className={styles.paletteToggle}
+                                onClick={() => fire("RerollPathForest")}>{t.pathReroll}</button>
+                        </div>}
+                        {!pathForest && <div className={styles.distributionRow}>
                             <div className={styles.settingLabel}>{t.distribution}</div>
                             <div className={styles.iconRow}>
                                 {noiseGlyphs.map((glyph, index) =>
                                     tooltipButton(glyph, noiseMode === index, t.modes[index][0], t.modes[index][1], () => fire("SetNoiseMode", index))
                                 )}
                             </div>
-                        </div>
+                        </div>}
 
-                        {(noiseMode !== 0 || speciesGrouping !== 0) && (
+                        {(pathForest || noiseMode !== 0 || speciesGrouping !== 0) && (
                             <div className={styles.noiseSettings}>
                                 <NumberControl label={t.noiseSize} value={noiseScale} min={10} max={200} step={5} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.noiseSizeTip} onChange={value => fire("SetNoiseScale", value)} />
-                                {noiseMode !== 0 && <NumberControl label={t.irregularity} value={noiseStrength} min={0} max={100} step={5} unit="%" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.irregularityTip} onChange={value => fire("SetNoiseStrength", value)} />}
+                                {(pathForest || noiseMode !== 0) && <NumberControl label={t.irregularity} value={noiseStrength} min={0} max={100} step={5} unit="%" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.irregularityTip} onChange={value => fire("SetNoiseStrength", value)} />}
                             </div>
                         )}
 

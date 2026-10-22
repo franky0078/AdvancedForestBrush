@@ -7,17 +7,17 @@
 	<ShortDescription Value="Create natural forests with custom brush shapes, distribution patterns, density controls and tree ages." />
 
 	<LongDescription>
-		# Advanced Forest Brush
+		**Advanced Forest Brush**
 
-		Advanced Forest Brush expands vegetation placement in Cities: Skylines II
+		Advanced Forest Brush expands vegetation placement
 
 
-		## Required dependency
+		**Required dependency**
 
 		Tree Controller by yenyang is required. Advanced Forest Brush uses its toolbar and tree-age selection.
 
 
-		## Brush shapes
+		**Brush shapes**
 
 		- Circle with adjustable brush size
 		- Square with adjustable size and rotation
@@ -25,7 +25,7 @@
 		- Multi-point polygon with an unlimited number of corner points
 
 
-		## Distribution modes
+		**Distribution modes**
 
 		- Uniform
 		- Natural
@@ -34,12 +34,21 @@
 		- Forest edge
 
 
-		## Tree ages
+		**Forest along paths**
+
+		- Build your roads and paths first, then paint a natural forest around them.
+		- Works with existing ground-level roads and paths and all supported brush shapes.
+		- Adjust the clear roadside verge, forest width and edge transition.
+		- Control clearing size and frequency.
+		- Use a seed to keep a pattern consistent, or select Reroll to generate a different layout.
+
+
+		**Tree ages**
 
 		Advanced Forest Brush uses the Tree Controller age selection
 
 
-		## Features
+		**Features**
 
 		- Configurable noise size and irregularity
 		- Movable and rotatable completed polygons
@@ -48,9 +57,12 @@
 		- Plant Frequency species list option for controlling the frequency of each plant in the list
 		- Support for the game and editor
 		- English, German, Spanish, Italian, French localization
+		
+		- Detailed forest preview (Beta)
+		  optional detailed preview in the mod options to visualize forest patterns before planting, including noise variations and clearings.
 
 
-		## How to use
+		**How to use**
 
 		Open the vegetation tool, select an asset and open Advanced Forest Brush.
 		Select a shape, configure the desired distribution and tree ages, then place vegetation with the left mouse button.
@@ -67,22 +79,22 @@
 		Change the add-to-list combination under **Options → Advanced Forest Brush → Key bindings**.
 
 
-		## Compatibility
+		**Compatibility**
 
 		Advanced Forest Brush requires Tree Controller and integrates directly with its toolbar and tree-age selection. It is compatible with all vegetation and tree assets, including those from other mods.
 
 
-		## Credits and Inspiration
+		**Credits and Inspiration**
 
 		Advanced Forest Brush was inspired by the work of yenyang and his Tree Controller mod.
 
 
-		## Transparency note
+		**Transparency note**
 
 		Some parts of the code and user interface were created with AI assistance. AI is also used for debugging and troubleshooting.
 
 
-		## Bug reports
+		**Bug reports**
 
 		When reporting a problem, please include:
 
@@ -101,13 +113,13 @@
 	<Screenshot Value="Properties/Screenshot06.jpg" />
 	<Screenshot Value="Properties/Screenshot07.jpg" />
 	<Screenshot Value="Properties/Screenshot08.jpg" />
-	<!--<Screenshot Value="Properties/Screenshot09.jpg" /> -->
+	<Screenshot Value="Properties/Screenshot09.jpg" /> 
 
 	<Tag Value="Code Mod" />
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="1.0.2" />
+	<ModVersion Value="1.1.0" />
 	<GameVersion Value="1.6.*" />
 
 	
@@ -117,7 +129,11 @@
 	<ChangeLog>
 		## Latest changes
 
-		- rename species list to vegetation list
+		- added new forest along paths mode: paint vegetation around existing ground-level roads and paths using the selected brush shape.
+		- added adjustable road clearance, forest width, edge transition, clearings and clearing size.
+		- added optional detailed forest preview (Beta) for both regular forest painting and the road/path mode. Disabled by default
+		- ui improvements and bug fixes
+
 	</ChangeLog>
 
 	<!--Optional external links for your own mod.-->

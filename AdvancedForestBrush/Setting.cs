@@ -81,6 +81,24 @@ namespace AdvancedForestBrush
         [SettingsUIHidden]
         public int PaletteWindowHeight { get; set; }
 
+        [SettingsUIHidden]
+        public int PathGap { get; set; }
+
+        [SettingsUIHidden]
+        public int PathWidth { get; set; }
+
+        [SettingsUIHidden]
+        public int PathTransition { get; set; }
+
+        [SettingsUIHidden]
+        public int PathClearings { get; set; }
+
+        [SettingsUIHidden]
+        public int PathClearingSize { get; set; }
+
+        [SettingsUIHidden]
+        public int PathSeed { get; set; }
+
         public Setting(IMod mod)
             : base(mod)
         {
@@ -205,6 +223,12 @@ namespace AdvancedForestBrush
         }
 
         [SettingsUISection(kSection, kDefaultsGroup)]
+        public bool DetailedPathPreview { get; set; }
+
+        [SettingsUISection(kSection, kDefaultsGroup)]
+        public bool RandomVegetationRotation { get; set; }
+
+        [SettingsUISection(kSection, kDefaultsGroup)]
         public bool ResetToDefaults
         {
             set => SetDefaults();
@@ -227,6 +251,15 @@ namespace AdvancedForestBrush
 
         public override void SetDefaults()
         {
+            PathGap = ForestBrushState.PathGap = 4;
+            PathWidth = ForestBrushState.PathWidth = 100;
+            PathTransition = ForestBrushState.PathTransition = 20;
+            PathClearings = ForestBrushState.PathClearings = 25;
+            PathClearingSize = ForestBrushState.PathClearingSize = 60;
+            PathSeed = ForestBrushState.PathSeed = 1977;
+            ForestBrushState.PathForest = false;
+            DetailedPathPreview = false;
+            RandomVegetationRotation = false;
             DefaultShape = ForestBrushShape.Circle;
             DefaultCircleBrushSize = 100;
             DefaultShapeWidth = 100;
@@ -245,6 +278,12 @@ namespace AdvancedForestBrush
 
         public void ApplyToState()
         {
+            ForestBrushState.PathGap = math.clamp(PathGap, 0, 50);
+            ForestBrushState.PathWidth = math.clamp(PathWidth, 10, 300);
+            ForestBrushState.PathTransition = math.clamp(PathTransition, 1, 100);
+            ForestBrushState.PathClearings = math.clamp(PathClearings, 0, 80);
+            ForestBrushState.PathClearingSize = math.clamp(PathClearingSize, 10, 200);
+            ForestBrushState.PathSeed = math.clamp(PathSeed, 1, 999999);
             ForestBrushState.SetShape((int)DefaultShape);
             ForestBrushState.CircleBrushSize = DefaultCircleBrushSize;
             ForestBrushState.ShapeWidth = DefaultShapeWidth;

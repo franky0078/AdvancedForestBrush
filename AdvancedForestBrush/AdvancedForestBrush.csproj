@@ -3,12 +3,13 @@
 		<OutputType>Library</OutputType>
 		<Configurations>Debug;Release</Configurations>
 		<LangVersion>9</LangVersion>
-		<AssemblyVersion>1.0.2</AssemblyVersion>
-		<FileVersion>$(AssemblyVersion)</FileVersion>
-		<Version>$(AssemblyVersion)</Version>
 	</PropertyGroup>
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.props" />
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" />
+	<Import Project="Mod.props" />
+	<Target Name="SyncModVersion" BeforeTargets="PrepareForBuild">
+		<Exec Command="node &quot;$(ProjectDir)UI/tools/sync-version.js&quot;" />
+	</Target>
 	<ItemGroup>
 		<Reference Include="Colossal.Core">
 			<HintPath>$(ManagedPath)\Colossal.Core.dll</HintPath>

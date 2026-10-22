@@ -20,6 +20,7 @@ namespace AdvancedForestBrush
         private float m_PreviousBrushStrength;
         private bool m_OwnsObjectToolState;
         private int m_ShortcutAddFrames;
+        private readonly System.Random m_PathSeedRandom = new System.Random();
 
         public override GameMode gameMode => GameMode.GameOrEditor;
 
@@ -34,6 +35,14 @@ namespace AdvancedForestBrush
 
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "IsVisible", IsVegetationContext));
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "PanelVisible", () => ForestBrushState.PanelVisible));
+            AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "RandomVegetationRotation",
+                () => Mod.Settings?.RandomVegetationRotation ?? false));
+            AddBinding(new TriggerBinding(Mod.Id, "ToggleRandomVegetationRotation", () =>
+            {
+                if (Mod.Settings == null) return;
+                Mod.Settings.RandomVegetationRotation = !Mod.Settings.RandomVegetationRotation;
+                Mod.Settings.ApplyAndSave();
+            }));
             AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesPalette", () => ForestSpeciesPalette.NamesJson));
             AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesIcons", () => ForestSpeciesPalette.IconsJson));
             AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesWeights", () => ForestSpeciesPalette.WeightsJson));
@@ -53,6 +62,85 @@ namespace AdvancedForestBrush
             AddUpdateBinding(new GetterValueBinding<float>(Mod.Id, "Rotation", () => ForestBrushState.RotationDegrees));
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "PolygonPointCount", () => ForestBrushState.PolygonPoints.Count));
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "PolygonClosed", () => ForestBrushState.PolygonClosed));
+
+            AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "PathForest", () => ForestBrushState.PathForest));
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "PathCount", () =>
+                World.GetOrCreateSystemManaged<ForestPathNetworkSystem>().PathCount));
+            AddBinding(new TriggerBinding(Mod.Id, "TogglePathForest", () =>
+            {
+                ForestBrushState.PathForest = !ForestBrushState.PathForest;
+            }));
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "PathGap", () => ForestBrushState.PathGap));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "SetPathGap", value =>
+            {
+                ForestBrushState.PathGap = math.clamp(value, 0, 50);
+                if (Mod.Settings != null)
+                {
+                    Mod.Settings.PathGap = ForestBrushState.PathGap;
+                    Mod.Settings.ApplyAndSave();
+                }
+            }));
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "PathWidth", () => ForestBrushState.PathWidth));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "SetPathWidth", value =>
+            {
+                ForestBrushState.PathWidth = math.clamp(value, 10, 300);
+                if (Mod.Settings != null)
+                {
+                    Mod.Settings.PathWidth = ForestBrushState.PathWidth;
+                    Mod.Settings.ApplyAndSave();
+                }
+            }));
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "PathTransition", () => ForestBrushState.PathTransition));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "SetPathTransition", value =>
+            {
+                ForestBrushState.PathTransition = math.clamp(value, 1, 100);
+                if (Mod.Settings != null)
+                {
+                    Mod.Settings.PathTransition = ForestBrushState.PathTransition;
+                    Mod.Settings.ApplyAndSave();
+                }
+            }));
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "PathClearings", () => ForestBrushState.PathClearings));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "SetPathClearings", value =>
+            {
+                ForestBrushState.PathClearings = math.clamp(value, 0, 80);
+                if (Mod.Settings != null)
+                {
+                    Mod.Settings.PathClearings = ForestBrushState.PathClearings;
+                    Mod.Settings.ApplyAndSave();
+                }
+            }));
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "PathClearingSize", () => ForestBrushState.PathClearingSize));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "SetPathClearingSize", value =>
+            {
+                ForestBrushState.PathClearingSize = math.clamp(value, 10, 200);
+                if (Mod.Settings != null)
+                {
+                    Mod.Settings.PathClearingSize = ForestBrushState.PathClearingSize;
+                    Mod.Settings.ApplyAndSave();
+                }
+            }));
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "PathSeed", () => ForestBrushState.PathSeed));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "SetPathSeed", value =>
+            {
+                ForestBrushState.PathSeed = math.clamp(value, 1, 999999);
+                if (Mod.Settings != null)
+                {
+                    Mod.Settings.PathSeed = ForestBrushState.PathSeed;
+                    Mod.Settings.ApplyAndSave();
+                }
+            }));
+            AddBinding(new TriggerBinding(Mod.Id, "RerollPathForest", () =>
+            {
+                // A nonzero random offset guarantees a different seed without a retry loop.
+                ForestBrushState.PathSeed = 1 +
+                    (ForestBrushState.PathSeed - 1 + m_PathSeedRandom.Next(1, 999999)) % 999999;
+                if (Mod.Settings != null)
+                {
+                    Mod.Settings.PathSeed = ForestBrushState.PathSeed;
+                    Mod.Settings.ApplyAndSave();
+                }
+            }));
 
             AddBinding(new TriggerBinding(Mod.Id, "TogglePanel", TogglePanel));
             AddBinding(new TriggerBinding(Mod.Id, "AddCurrentSpecies", AddCurrentSpecies));

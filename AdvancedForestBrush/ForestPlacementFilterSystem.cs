@@ -14,6 +14,7 @@ namespace AdvancedForestBrush
     {
         private EntityQuery m_DefinitionQuery;
         private EntityQuery m_BrushDefinitionQuery;
+        private ForestPathNetworkSystem m_PathNetwork;
         private ToolSystem m_ToolSystem;
         private ObjectToolSystem m_ObjectToolSystem;
         private ToolRaycastSystem m_ToolRaycastSystem;
@@ -21,6 +22,7 @@ namespace AdvancedForestBrush
         protected override void OnCreate()
         {
             base.OnCreate();
+            m_PathNetwork = World.GetOrCreateSystemManaged<ForestPathNetworkSystem>();
             m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
             m_ObjectToolSystem = World.GetOrCreateSystemManaged<ObjectToolSystem>();
             m_ToolRaycastSystem = World.GetOrCreateSystemManaged<ToolRaycastSystem>();
@@ -46,7 +48,10 @@ namespace AdvancedForestBrush
             bool customShape =
                 ForestBrushState.Shape != ForestBrushShape.Circle;
 
-            if (!customShape &&
+            bool detailedPreview = Mod.Settings?.DetailedPathPreview ?? false;
+            bool randomRotation = Mod.Settings?.RandomVegetationRotation ?? false;
+
+            if (!randomRotation && !detailedPreview && !ForestBrushState.PathForest && !customShape &&
                 ForestBrushState.NoiseMode == ForestNoiseMode.Uniform &&
                 ForestBrushState.SpeciesGrouping == 0 &&
                 ForestBrushState.DensityPercent >= 100)
@@ -62,7 +67,11 @@ namespace AdvancedForestBrush
                 : ForestBrushState.CursorPosition;
 
 
-            if (customShape)
+            if (ForestBrushState.PathForest) m_PathNetwork.EnsureCache(shapeCenter);
+
+            // Brush definitions become render entities after the preview system runs.
+            // Suppress them for every custom preview, including detailed normal circles.
+            if (customShape || ForestBrushState.PathForest || detailedPreview)
             {
                 using NativeArray<Entity> brushDefinitionEntities =
                     m_BrushDefinitionQuery.ToEntityArray(Allocator.Temp);
@@ -94,16 +103,20 @@ namespace AdvancedForestBrush
 
                 bool outsideShape =
                     ForestBrushState.SuppressPolygonPlacement ||
-                    (customShape &&
+                    ((customShape || detailedPreview || ForestBrushState.PathForest) &&
                      ((!hasShapeCenter && !ForestBrushState.HasValidCursor) ||
                       !ForestBrushState.Contains(
                           definition.m_Position,
                           shapeCenter)));
 
-                bool rejectedByDensity = !KeepDensity(
+                bool rejectedByPath = ForestBrushState.PathForest &&
+                    !m_PathNetwork.Keep(definition.m_Position);
+
+                bool rejectedByDensity = !ForestBrushState.PathForest && !KeepDensity(
                     definition.m_Position, creation.m_RandomSeed);
 
                 bool rejectedByNoise =
+                    !ForestBrushState.PathForest &&
                     ForestBrushState.NoiseMode != ForestNoiseMode.Uniform &&
                     !Keep(definition.m_Position, creation.m_RandomSeed);
 
@@ -113,9 +126,16 @@ namespace AdvancedForestBrush
                     !KeepSpecies(definition.m_Position, creation.m_Prefab,
                         creation.m_RandomSeed);
 
-                if (outsideShape || rejectedByDensity || rejectedByNoise || rejectedBySpecies)
+                if (outsideShape || rejectedByPath || rejectedByDensity || rejectedByNoise || rejectedBySpecies)
                 {
                     EntityManager.DestroyEntity(entity);
+                }
+                else if (randomRotation)
+                {
+                    float angle = ForestBrushState.PlacementRandom(definition.m_Position,
+                        (uint)creation.m_RandomSeed ^ 0x4a39b70du) * (2f * math.PI);
+                    definition.m_Rotation = quaternion.RotateY(angle);
+                    EntityManager.SetComponentData(entity, definition);
                 }
             }
         }
@@ -127,9 +147,7 @@ namespace AdvancedForestBrush
                 return true;
             }
 
-            uint hash = math.hash(new uint4(math.asuint(position.x),
-                math.asuint(position.z), (uint)randomSeed, 0x6d2b79f5u));
-            float random = (hash & 0x00ffffffu) / 16777216f;
+            float random = ForestBrushState.PlacementRandom(position, (uint)randomSeed ^ 0x6d2b79f5u);
             return random < ForestBrushState.DensityPercent / 100f;
         }
 
@@ -156,8 +174,27 @@ namespace AdvancedForestBrush
 
         private static bool Keep(float3 position, int randomSeed)
         {
+            float chance = NoiseProbability(position.xz);
+            if (ForestBrushState.NoiseMode == ForestNoiseMode.Clusters)
+            {
+                uint hash = math.hash(new uint4(math.asuint(position.x),
+                    math.asuint(position.z), (uint)randomSeed, 0xa511e9b3u));
+                return (hash & 0x00ffffffu) / 16777216f < chance;
+            }
+            if (ForestBrushState.NoiseMode == ForestNoiseMode.Edge)
+            {
+                uint hash = math.hash(new uint3((uint)math.abs(position.x * 10f),
+                    (uint)math.abs(position.z * 10f), (uint)randomSeed));
+                return (hash & 0x00ffffffu) / 16777215f < chance;
+            }
+            return chance > 0f;
+        }
+
+        internal static float NoiseProbability(float2 position)
+        {
+            if (ForestBrushState.NoiseMode == ForestNoiseMode.Uniform) return 1f;
             float scale = math.max(10f, ForestBrushState.NoiseScale);
-            float2 p = new float2(position.x, position.z) / scale;
+            float2 p = position / scale;
             float seed = ForestBrushState.Seed * 0.0137f;
             float baseNoise = noise.snoise(p + new float2(seed, -seed)) * 0.5f + 0.5f;
             float detail = noise.snoise((p * 2.37f) + new float2(-seed, seed * 0.5f)) * 0.5f + 0.5f;
@@ -166,23 +203,18 @@ namespace AdvancedForestBrush
             switch (ForestBrushState.NoiseMode)
             {
                 case ForestNoiseMode.Natural:
-                    return value > 0.28f;
+                    return value > 0.28f ? 1f : 0f;
                 case ForestNoiseMode.Clusters:
                     float clusterValue = math.lerp(baseNoise, value, 0.35f);
                     float clusterChance = math.lerp(0.05f, 1f,
                         math.smoothstep(0.25f, 0.65f, clusterValue));
-                    uint clusterHash = math.hash(new uint4(math.asuint(position.x),
-                        math.asuint(position.z), (uint)randomSeed, 0xa511e9b3u));
-                    float clusterRandom = (clusterHash & 0x00ffffffu) / 16777216f;
-                    return clusterRandom < clusterChance;
+                    return clusterChance;
                 case ForestNoiseMode.Clearings:
-                    return value < 0.38f || value > 0.57f;
+                    return value < 0.38f || value > 0.57f ? 1f : 0f;
                 case ForestNoiseMode.Edge:
-                    uint hash = math.hash(new uint3((uint)math.abs(position.x * 10f), (uint)math.abs(position.z * 10f), (uint)randomSeed));
-                    float random = (hash & 0x00ffffffu) / 16777215f;
-                    return random < math.saturate(0.35f + value * 0.65f);
+                    return math.saturate(0.35f + value * 0.65f);
                 default:
-                    return true;
+                    return 1f;
             }
         }
     }

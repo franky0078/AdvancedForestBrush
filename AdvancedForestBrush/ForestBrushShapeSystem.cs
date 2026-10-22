@@ -73,8 +73,7 @@ namespace AdvancedForestBrush
                 return;
             }
 
-            // Apply immediately before ObjectToolSystem, after UI systems have
-            // updated their own brush values (including Tree Controller).
+            ApplyBrushSize();
             ApplyBrushStrength();
 
             if (!m_ToolRaycastSystem.GetRaycastResult(out RaycastResult result))
@@ -110,6 +109,26 @@ namespace AdvancedForestBrush
             {
                 m_ObjectToolSystem.brushStrength = 0f;
                 RotateFromPointerDelta();
+            }
+        }
+
+        private void ApplyBrushSize()
+        {
+            if (ForestBrushState.Shape == ForestBrushShape.Circle)
+            {
+                m_ObjectToolSystem.brushSize = math.max(10f, ForestBrushState.CircleBrushSize);
+            }
+            else if (ForestBrushState.Shape == ForestBrushShape.Square ||
+                     ForestBrushState.Shape == ForestBrushShape.Rectangle)
+            {
+                float width = ForestBrushState.ShapeWidth;
+                float length = ForestBrushState.Shape == ForestBrushShape.Square
+                    ? width : ForestBrushState.ShapeLength;
+                m_ObjectToolSystem.brushSize = math.sqrt(width * width + length * length) * 1.5f;
+            }
+            else if (ForestBrushState.PolygonClosed)
+            {
+                m_ObjectToolSystem.brushSize = math.max(10f, ForestBrushState.PolygonBoundingRadius * 3f);
             }
         }
 

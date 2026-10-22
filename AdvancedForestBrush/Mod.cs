@@ -11,7 +11,8 @@ namespace AdvancedForestBrush
     public sealed class Mod : IMod
     {
         public const string Id = "AdvancedForestBrush";
-        public const string ModVersion = "1.0.2";
+        public static readonly string ModVersion =
+            typeof(Mod).Assembly.GetName().Version.ToString(3);
         internal static ILog Log { get; private set; }
         public static Setting Settings { get; private set; }
 
@@ -56,6 +57,8 @@ namespace AdvancedForestBrush
                 new Setting(this));
 
             Settings.ApplyToState();
+            updateSystem.UpdateBefore<ForestPathNetworkSystem, ForestBrushShapeSystem>(
+                SystemUpdatePhase.ToolUpdate);
             // Suppress the ObjectTool brush before it processes a rotation drag.
             updateSystem.UpdateBefore<ForestBrushShapeSystem, ObjectToolSystem>(
                 SystemUpdatePhase.ToolUpdate);

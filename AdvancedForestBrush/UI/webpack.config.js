@@ -1,4 +1,5 @@
 const path = require("path");
+require("./tools/sync-version")();
 const MOD = require("./mod.json");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const { CSSPresencePlugin } = require("./tools/css-presence");

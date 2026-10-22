@@ -18,6 +18,9 @@ namespace AdvancedForestBrush
     [UpdateAfter(typeof(ForestBrushShapeSystem))]
     public partial class ForestBrushPreviewSystem : GameSystemBase
     {
+        private static bool DetailedPreview => Mod.Settings?.DetailedPathPreview ?? false;
+        private static bool UsePatternPreview => ForestBrushState.PathForest || DetailedPreview;
+
         private const int PreviewTextureSize = 128;
         private const float HaloPixels = 12f;
         private const float InnerPixels =
@@ -35,6 +38,23 @@ namespace AdvancedForestBrush
             new HashSet<Entity>();
         private Mesh m_Mesh;
         private MaterialPropertyBlock m_Properties;
+        private ForestPathNetworkSystem m_PathNetwork;
+        private Texture2D m_PathTexture;
+        private uint m_PathSignature;
+        private uint m_PathSettingsSignature;
+        private uint m_PendingPathSignature;
+        private bool m_PathPending;
+        private int m_PathPixelIndex;
+        private float3 m_PendingPathCenter;
+        private float m_PendingPathWidth, m_PendingPathLength, m_PendingPathRotation;
+        private float m_PendingPathSine, m_PendingPathCosine;
+        private readonly System.Diagnostics.Stopwatch m_PathPreviewTimer = new System.Diagnostics.Stopwatch();
+        private const int PathPixelsPerFrame = 2048;
+        private const double PathPreviewBudgetMs = 1.25;
+        private bool m_PathBuilt;
+        private float3 m_PathCenter;
+        private float m_PathRotation, m_PathWidth, m_PathLength;
+        private Color32[] m_PathPixels = new Color32[PreviewTextureSize * PreviewTextureSize];
         private Texture2D m_RectangleTexture;
         private Texture2D m_PolygonTexture;
         private int m_BuiltPolygonVersion = -1;
@@ -45,6 +65,7 @@ namespace AdvancedForestBrush
         protected override void OnCreate()
         {
             base.OnCreate();
+            m_PathNetwork = World.GetOrCreateSystemManaged<ForestPathNetworkSystem>();
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
             m_TerrainSystem = World.GetOrCreateSystemManaged<TerrainSystem>();
             m_BrushQuery = GetEntityQuery(
@@ -61,12 +82,25 @@ namespace AdvancedForestBrush
         {
             bool customPreview =
                 ForestBrushState.PanelVisible &&
-                ForestBrushState.Shape != ForestBrushShape.Circle;
+                (UsePatternPreview || ForestBrushState.Shape != ForestBrushShape.Circle);
 
             if (!customPreview)
             {
                 RestoreVanillaBrush();
+                m_PathBuilt = false;
+                m_PathPending = false;
                 return;
+            }
+
+            if (UsePatternPreview && ForestBrushState.HasValidCursor)
+            {
+                if (ForestBrushState.PathForest) m_PathNetwork.EnsureCache(ForestBrushState.CursorPosition);
+                UpdatePathTexture();
+            }
+            else
+            {
+                m_PathBuilt = false;
+                m_PathPending = false;
             }
 
             using NativeArray<Entity> entities =
@@ -157,7 +191,7 @@ namespace AdvancedForestBrush
         {
             if (!ForestBrushState.PanelVisible ||
                 !ForestBrushState.HasValidCursor ||
-                ForestBrushState.Shape == ForestBrushShape.Circle ||
+                (!UsePatternPreview && ForestBrushState.Shape == ForestBrushShape.Circle) ||
                 (ForestBrushState.Shape == ForestBrushShape.Polygon &&
                  !ForestBrushState.PolygonClosed) ||
                 !m_PrefabSystem.TryGetSingletonPrefab<OverlayConfigurationPrefab>(
@@ -172,7 +206,15 @@ namespace AdvancedForestBrush
             float rotation;
             Texture texture;
 
-            if (ForestBrushState.Shape == ForestBrushShape.Polygon)
+            if (UsePatternPreview)
+            {
+                if (!m_PathBuilt) return;
+                width = m_PathWidth;
+                length = m_PathLength;
+                rotation = m_PathRotation;
+                texture = m_PathTexture;
+            }
+            else if (ForestBrushState.Shape == ForestBrushShape.Polygon)
             {
                 width = ForestBrushState.PolygonHalfWidth * 2f;
                 length = ForestBrushState.PolygonHalfLength * 2f;
@@ -196,7 +238,7 @@ namespace AdvancedForestBrush
 
             float bottom = m_TerrainSystem.heightScaleOffset.y - 50f;
             float height = m_TerrainSystem.heightScaleOffset.x + 100f;
-            float3 cursor = ForestBrushState.CursorPosition;
+            float3 cursor = UsePatternPreview ? m_PathCenter : ForestBrushState.CursorPosition;
             Matrix4x4 matrix = Matrix4x4.TRS(
                 new Vector3(cursor.x, bottom, cursor.z),
                 Quaternion.Euler(0f, rotation, 0f),
@@ -227,6 +269,112 @@ namespace AdvancedForestBrush
                         false);
                 }
             }
+        }
+
+        private void UpdatePathTexture()
+        {
+            if (ForestBrushState.Shape == ForestBrushShape.Polygon && !ForestBrushState.PolygonClosed)
+            {
+                m_PathBuilt = false;
+                m_PathPending = false;
+                return;
+            }
+            float width = ForestBrushState.Shape == ForestBrushShape.Circle
+                ? ForestBrushState.CircleBrushRadius * 2f
+                : ForestBrushState.Shape == ForestBrushShape.Polygon
+                    ? ForestBrushState.PolygonHalfWidth * 2f : ForestBrushState.ShapeWidth;
+            float length = ForestBrushState.Shape == ForestBrushShape.Rectangle
+                ? ForestBrushState.ShapeLength
+                : ForestBrushState.Shape == ForestBrushShape.Polygon
+                    ? ForestBrushState.PolygonHalfLength * 2f : width;
+            float rotation = ForestBrushState.Shape == ForestBrushShape.Circle ? 0f : ForestBrushState.RotationDegrees;
+            float3 center = ForestBrushState.CursorPosition;
+            uint settings = math.hash(new float4(width, length, rotation, (float)ForestBrushState.Shape));
+            settings = math.hash(new uint4(settings,
+                ForestBrushState.PathForest ? (uint)m_PathNetwork.Version : 0u,
+                (uint)ForestBrushState.PolygonVersion, ForestBrushState.PathForest ? 1u : 0u));
+            settings = math.hash(new uint2(settings, DetailedPreview ? 1u : 0u));
+            if (DetailedPreview)
+            {
+                settings = math.hash(new uint4(settings, (uint)ForestBrushState.NoiseScale,
+                    (uint)ForestBrushState.NoiseStrength, (uint)ForestBrushState.DensityPercent));
+                settings = math.hash(new uint4(settings, (uint)ForestBrushState.NoiseMode,
+                    (uint)ForestBrushState.Seed, (uint)ForestBrushState.PathSeed));
+                settings = math.hash(new uint4(settings, (uint)ForestBrushState.PathTransition,
+                    (uint)ForestBrushState.PathClearings, (uint)ForestBrushState.PathClearingSize));
+            }
+            if (settings != m_PathSettingsSignature)
+            {
+                m_PathSettingsSignature = settings;
+                m_PathPending = false;
+                m_PathBuilt = false;
+            }
+            uint signature = math.hash(new uint3(settings, math.asuint(center.x), math.asuint(center.z)));
+            if (!m_PathPending)
+            {
+                if (m_PathBuilt && signature == m_PathSignature) return;
+                m_PendingPathCenter = center;
+                m_PendingPathWidth = width;
+                m_PendingPathLength = length;
+                m_PendingPathRotation = rotation;
+                m_PendingPathSine = math.sin(math.radians(rotation));
+                m_PendingPathCosine = math.cos(math.radians(rotation));
+                m_PendingPathSignature = signature;
+                m_PathPixelIndex = 0;
+                m_PathPending = true;
+            }
+            int textureSize = DetailedPreview ? PreviewTextureSize : 64;
+            if (m_PathTexture != null && m_PathTexture.width != textureSize)
+            {
+                Object.Destroy(m_PathTexture);
+                m_PathTexture = null;
+            }
+            if (m_PathPixels.Length != textureSize * textureSize)
+                m_PathPixels = new Color32[textureSize * textureSize];
+            if (m_PathTexture == null)
+            {
+                m_PathTexture = new Texture2D(textureSize, textureSize,
+                    TextureFormat.RGBA32, false, true)
+                {
+                    name = "Advanced Forest Brush Path Forest",
+                    wrapMode = TextureWrapMode.Clamp,
+                    filterMode = FilterMode.Bilinear
+                };
+            }
+            m_PathPreviewTimer.Restart();
+            int end = math.min(m_PathPixels.Length, m_PathPixelIndex + (DetailedPreview ? PathPixelsPerFrame : m_PathPixels.Length));
+            float density = DetailedPreview ? math.min(1f, ForestBrushState.DensityPercent / 100f) : 1f;
+            for (; m_PathPixelIndex < end; m_PathPixelIndex++)
+            {
+                if ((m_PathPixelIndex & 63) == 0 &&
+                    m_PathPreviewTimer.Elapsed.TotalMilliseconds >= PathPreviewBudgetMs) break;
+                int x = m_PathPixelIndex % textureSize;
+                int y = m_PathPixelIndex / textureSize;
+                float2 local = new float2(((x + 0.5f) / textureSize - 0.5f) * m_PendingPathWidth * PreviewScale,
+                    ((y + 0.5f) / textureSize - 0.5f) * m_PendingPathLength * PreviewScale);
+                float2 world = m_PendingPathCenter.xz + new float2(
+                    local.x * m_PendingPathCosine + local.y * m_PendingPathSine,
+                    -local.x * m_PendingPathSine + local.y * m_PendingPathCosine);
+                bool inside = ForestBrushState.Shape == ForestBrushShape.Circle
+                    ? math.lengthsq(local) <= m_PendingPathWidth * m_PendingPathWidth * 0.25f
+                    : ForestBrushState.Contains(new float3(world.x, m_PendingPathCenter.y, world.y), m_PendingPathCenter);
+                float chance = !inside ? 0f : ForestBrushState.PathForest
+                    ? m_PathNetwork.Probability(world, DetailedPreview)
+                    : ForestPlacementFilterSystem.NoiseProbability(world);
+                m_PathPixels[m_PathPixelIndex] = new Color32(255, 255, 255,
+                    (byte)math.round(chance * density * 255f));
+            }
+            m_PathPreviewTimer.Stop();
+            if (m_PathPixelIndex < m_PathPixels.Length) return;
+            m_PathTexture.SetPixels32(m_PathPixels);
+            m_PathTexture.Apply(false, false);
+            m_PathCenter = m_PendingPathCenter;
+            m_PathRotation = m_PendingPathRotation;
+            m_PathWidth = m_PendingPathWidth;
+            m_PathLength = m_PendingPathLength;
+            m_PathSignature = m_PendingPathSignature;
+            m_PathBuilt = true;
+            m_PathPending = false;
         }
 
         private void BuildPolygonTexture()
@@ -424,6 +572,8 @@ namespace AdvancedForestBrush
             {
                 Object.Destroy(m_PolygonTexture);
             }
+
+            if (m_PathTexture != null) Object.Destroy(m_PathTexture);
 
             if (m_RectangleTexture != null)
             {

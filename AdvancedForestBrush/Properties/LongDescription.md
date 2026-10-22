@@ -1,14 +1,14 @@
-# Advanced Forest Brush
+**Advanced Forest Brush**
 
-Advanced Forest Brush expands vegetation placement in Cities: Skylines II
+Advanced Forest Brush expands vegetation placement
 
 
-## Required dependency
+**Required dependency**
 
 Tree Controller by yenyang is required. Advanced Forest Brush uses its toolbar and tree-age selection.
 
 
-## Brush shapes
+**Brush shapes**
 
 - Circle with adjustable brush size
 - Square with adjustable size and rotation
@@ -16,7 +16,7 @@ Tree Controller by yenyang is required. Advanced Forest Brush uses its toolbar a
 - Multi-point polygon with an unlimited number of corner points
 
 
-## Distribution modes
+**Distribution modes**
 
 - Uniform
 - Natural
@@ -25,12 +25,21 @@ Tree Controller by yenyang is required. Advanced Forest Brush uses its toolbar a
 - Forest edge
 
 
-## Tree ages
+**Forest along paths**
+
+- Build your roads and paths first, then paint a natural forest around them.
+- Works with existing ground-level roads and paths and all supported brush shapes.
+- Adjust the clear roadside verge, forest width and edge transition.
+- Control clearing size and frequency.
+- Use a seed to keep a pattern consistent, or select Reroll to generate a different layout.
+
+
+**Tree ages**
 
 Advanced Forest Brush uses the Tree Controller age selection
 
 
-## Features
+**Features**
 
 - Configurable noise size and irregularity
 - Movable and rotatable completed polygons
@@ -39,9 +48,12 @@ Advanced Forest Brush uses the Tree Controller age selection
 - Plant Frequency species list option for controlling the frequency of each plant in the list
 - Support for the game and editor
 - English, German, Spanish, Italian, French localization
+		
+- Detailed forest preview (Beta)
+	optional detailed preview in the mod options to visualize forest patterns before planting, including noise variations and clearings.
 
 
-## How to use
+**How to use**
 
 Open the vegetation tool, select an asset and open Advanced Forest Brush.
 Select a shape, configure the desired distribution and tree ages, then place vegetation with the left mouse button.
@@ -49,31 +61,31 @@ For polygons, left-click to add points and click the first point or double-click
 Hold ctrl + right mouse button and move horizontally to rotate the completed polygon.
 Press Esc or use Reset polygon to start again.
 
-To mix plants from different pages of the vegetation bar, click **Use species list** in the brush panel. 
-Ctrl + left-click a plant in the vegetation bar to add it; alternatively, select it and click **Add current plant**. 
-Scroll the bar and repeat for as many plants as you need. 
-The brush uses the plants in the list even when they are no longer visible in the bar. 
-Remove individual plants with **×**, or click **Clear list**. An empty list uses the game's current selection. 
-Click **Use game selection** or close the list window to return to normal selection. 
+To mix plants from different pages of the vegetation bar, click **Use species list** in the brush panel.
+Ctrl + left-click a plant in the vegetation bar to add it; alternatively, select it and click **Add current plant**.
+Scroll the bar and repeat for as many plants as you need.
+The brush uses the plants in the list even when they are no longer visible in the bar.
+Remove individual plants with **×**, or click **Clear list**. An empty list uses the game's current selection.
+Click **Use game selection** or close the list window to return to normal selection.
 Change the add-to-list combination under **Options → Advanced Forest Brush → Key bindings**.
 
 
-## Compatibility
+**Compatibility**
 
 Advanced Forest Brush requires Tree Controller and integrates directly with its toolbar and tree-age selection. It is compatible with all vegetation and tree assets, including those from other mods.
 
 
-## Credits and Inspiration
+**Credits and Inspiration**
 
 Advanced Forest Brush was inspired by the work of yenyang and his Tree Controller mod.
 
 
-## Transparency note
+**Transparency note**
 
 Some parts of the code and user interface were created with AI assistance. AI is also used for debugging and troubleshooting.
 
 
-## Bug reports
+**Bug reports**
 
 When reporting a problem, please include:
 
