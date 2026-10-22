@@ -36,6 +36,8 @@ namespace AdvancedForestBrush.Localization
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DetailedPathPreview)), "Anteprima dettagliata del bosco (Beta)" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.DetailedPathPreview)), "Mostra densità e radure in entrambe le modalità. Disattivata per impostazione predefinita: forma normale in modalità alberi; area piena tra il margine libero e il limite del bosco in modalità strade, senza rumore o radure. I dettagli richiedono più calcoli. La piantagione resta invariata. Può causare lag e cali di FPS, soprattutto con pennelli grandi." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.LegacyPathPreview)), "Modalità strade: anteprima classica" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.LegacyPathPreview)), "Mostra la forma normale del pennello in modalità strade, senza ritagli delle strade, limiti del bosco o radure. Evita il calcolo della maschera e ha precedenza sull’anteprima dettagliata in modalità strade. La piantagione e il rilevamento delle strade restano invariati. Disattivata per impostazione predefinita." },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.RandomVegetationRotation)), "Rotazione casuale della vegetazione" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.RandomVegetationRotation)), "Ruota casualmente la nuova vegetazione attorno all’asse verticale (0–360°). Vale per tutte le forme, entrambe le modalità e la lista della vegetazione. Disattivata: rotazione abituale. La vegetazione esistente resta invariata." },
 

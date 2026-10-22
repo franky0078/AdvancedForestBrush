@@ -69,9 +69,7 @@ namespace AdvancedForestBrush
 
             if (ForestBrushState.PathForest) m_PathNetwork.EnsureCache(shapeCenter);
 
-            // Brush definitions become render entities after the preview system runs.
-            // Suppress them for every custom preview, including detailed normal circles.
-            if (customShape || ForestBrushState.PathForest || detailedPreview)
+            if (customShape || ForestBrushPreviewSystem.UsePatternPreview)
             {
                 using NativeArray<Entity> brushDefinitionEntities =
                     m_BrushDefinitionQuery.ToEntityArray(Allocator.Temp);
@@ -158,7 +156,6 @@ namespace AdvancedForestBrush
                 (uint)prefab.Version));
             float2 offset = new float2((species & 0xffffu) * 0.0137f,
                 ((species >> 16) & 0xffffu) * 0.0179f);
-            // The existing NoiseSize controls the approximate width of a patch.
             float2 p = new float2(position.x, position.z) /
                 math.max(10f, ForestBrushState.NoiseScale);
             float field = noise.snoise(p + offset) * 0.5f + 0.5f;

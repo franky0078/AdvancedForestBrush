@@ -2,7 +2,7 @@
   "id": "AdvancedForestBrush",
   "name": "Advanced Forest Brush",
   "author": "Frank",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "dependencies": ["Tree_Controller"]
 }
 

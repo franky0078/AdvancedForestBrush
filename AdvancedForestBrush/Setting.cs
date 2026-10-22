@@ -226,6 +226,9 @@ namespace AdvancedForestBrush
         public bool DetailedPathPreview { get; set; }
 
         [SettingsUISection(kSection, kDefaultsGroup)]
+        public bool LegacyPathPreview { get; set; }
+
+        [SettingsUISection(kSection, kDefaultsGroup)]
         public bool RandomVegetationRotation { get; set; }
 
         [SettingsUISection(kSection, kDefaultsGroup)]
@@ -259,6 +262,7 @@ namespace AdvancedForestBrush
             PathSeed = ForestBrushState.PathSeed = 1977;
             ForestBrushState.PathForest = false;
             DetailedPathPreview = false;
+            LegacyPathPreview = false;
             RandomVegetationRotation = false;
             DefaultShape = ForestBrushShape.Circle;
             DefaultCircleBrushSize = 100;

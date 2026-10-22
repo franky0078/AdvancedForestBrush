@@ -19,7 +19,9 @@ namespace AdvancedForestBrush
     public partial class ForestBrushPreviewSystem : GameSystemBase
     {
         private static bool DetailedPreview => Mod.Settings?.DetailedPathPreview ?? false;
-        private static bool UsePatternPreview => ForestBrushState.PathForest || DetailedPreview;
+        internal static bool UsePatternPreview => ForestBrushState.PathForest
+            ? !(Mod.Settings?.LegacyPathPreview ?? false)
+            : DetailedPreview;
 
         private const int PreviewTextureSize = 128;
         private const float HaloPixels = 12f;
@@ -341,6 +343,7 @@ namespace AdvancedForestBrush
                     filterMode = FilterMode.Bilinear
                 };
             }
+
             m_PathPreviewTimer.Restart();
             int end = math.min(m_PathPixels.Length, m_PathPixelIndex + (DetailedPreview ? PathPixelsPerFrame : m_PathPixels.Length));
             float density = DetailedPreview ? math.min(1f, ForestBrushState.DensityPercent / 100f) : 1f;

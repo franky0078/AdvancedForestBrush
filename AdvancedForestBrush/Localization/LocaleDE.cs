@@ -36,6 +36,8 @@ namespace AdvancedForestBrush.Localization
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DetailedPathPreview)), "Detaillierte Waldvorschau (Beta)" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.DetailedPathPreview)), "Zeigt Dichtemuster und Lichtungen in beiden Waldmodi. Standardmäßig aus: normale Pinselform im Baummodus; im Straßenmodus eine gefüllte Fläche zwischen freiem Wegrand und Waldgrenze, ohne Noise und Lichtungen. Details benötigen mehr Rechenleistung. Die Bepflanzung bleibt unverändert. Kann Lags und FPS-Einbrüche verursachen, besonders bei großen Pinseln." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.LegacyPathPreview)), "Straßenmodus: Legacy-Pinselvorschau" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.LegacyPathPreview)), "Zeigt im Straßenmodus die normale Pinselform ohne Straßenausschnitte, Waldgrenzen oder Lichtungen. Spart die Berechnung der Vorschau-Maske und hat im Straßenmodus Vorrang vor der detaillierten Vorschau. Die Bepflanzung und ihre Straßenerkennung bleiben unverändert. Standardmäßig aus." },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.RandomVegetationRotation)), "Zufällige Vegetationsrotation" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.RandomVegetationRotation)), "Dreht neu platzierte Vegetation zufällig um die Hochachse (0–360°). Gilt für alle Pinselformen, beide Waldmodi und die Pflanzenliste. Aus: bisheriges Drehverhalten. Bestehende Vegetation bleibt unverändert." },
 

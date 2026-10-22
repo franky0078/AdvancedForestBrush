@@ -36,6 +36,8 @@ namespace AdvancedForestBrush.Localization
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DetailedPathPreview)), "Detailed forest preview (Beta)" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.DetailedPathPreview)), "Shows density patterns and clearings in both forest modes. Disabled by default: the normal brush shape in tree mode; a filled area between the free roadside margin and forest boundary in road mode, without noise or clearings. Details require more processing power. Planting is unchanged. May cause lag and FPS drops, especially with large brushes." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.LegacyPathPreview)), "Road mode: legacy brush preview" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.LegacyPathPreview)), "Shows the normal brush shape in road mode without road cutouts, forest boundaries or clearings. Skips preview-mask calculations and overrides detailed previews in road mode. Planting and its road detection remain unchanged. Disabled by default." },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.RandomVegetationRotation)), "Random vegetation rotation" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.RandomVegetationRotation)), "Randomly rotates newly placed vegetation around the vertical axis (0–360°). Applies to all brush shapes, both forest modes and the vegetation list. Off: keeps the previous rotation behavior. Existing vegetation is unchanged." },
 

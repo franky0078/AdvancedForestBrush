@@ -36,6 +36,8 @@ namespace AdvancedForestBrush.Localization
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DetailedPathPreview)), "Aperçu détaillé de la forêt (Beta)" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.DetailedPathPreview)), "Affiche la densité et les clairières dans les deux modes. Désactivé par défaut : forme habituelle en mode arbres ; zone pleine entre la marge libre et la limite du bois en mode routes, sans bruit ni clairières. Les détails demandent plus de calculs. La plantation reste inchangée. Peut provoquer des ralentissements et des baisses de FPS, surtout avec de grands pinceaux." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.LegacyPathPreview)), "Mode routes : aperçu classique du pinceau" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.LegacyPathPreview)), "Affiche la forme normale du pinceau en mode routes, sans découpe des routes, limites de forêt ni clairières. Évite le calcul du masque et remplace l’aperçu détaillé en mode routes. La plantation et sa détection des routes restent inchangées. Désactivé par défaut." },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.RandomVegetationRotation)), "Rotation aléatoire de la végétation" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.RandomVegetationRotation)), "Oriente aléatoirement la nouvelle végétation autour de l’axe vertical (0–360°). Toutes les formes, les deux modes et la liste de végétation sont concernés. Désactivé : rotation habituelle. La végétation existante reste inchangée." },
 
