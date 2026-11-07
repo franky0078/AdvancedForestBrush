@@ -5,6 +5,7 @@ using Game.Tools;
 using Game.UI;
 using Unity.Entities;
 using Unity.Mathematics;
+using AgeMask = Game.Tools.AgeMask;
 
 namespace AdvancedForestBrush
 {
@@ -158,6 +159,11 @@ namespace AdvancedForestBrush
                 }
             }));
 
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "TreeAgeMask",
+                () => Mod.Settings?.TreeAgeMask ?? (int)AgeMask.Mature));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "SetTreeAgeMask", SetTreeAgeMask));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "ToggleTreeAge", age =>
+                SetTreeAgeMask((Mod.Settings?.TreeAgeMask ?? (int)AgeMask.Mature) ^ age)));
             AddBinding(new TriggerBinding(Mod.Id, "TogglePanel", TogglePanel));
             AddBinding(new TriggerBinding(Mod.Id, "AddCurrentSpecies", AddCurrentSpecies));
             AddBinding(new TriggerBinding(Mod.Id, "TryAddSpeciesShortcut", TryAddSpeciesShortcut));
@@ -236,6 +242,19 @@ namespace AdvancedForestBrush
                      ForestBrushState.PolygonClosed)
             {
                 ApplyPolygonBrushBounds();
+            }
+        }
+
+        private static void SetTreeAgeMask(int ages)
+        {
+            var settings = Mod.Settings;
+            if (!ForestBrushState.PanelVisible || settings == null || ages == 0) return;
+
+            int previousAges = settings.TreeAgeMask;
+            settings.TreeAgeMask = ages;
+            if (settings.TreeAgeMask != previousAges)
+            {
+                settings.ApplyAndSave();
             }
         }
 

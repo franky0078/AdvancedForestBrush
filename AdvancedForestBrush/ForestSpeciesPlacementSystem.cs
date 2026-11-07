@@ -6,6 +6,7 @@ using Game.Tools;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using AgeMask = Game.Tools.AgeMask;
 
 namespace AdvancedForestBrush
 {
@@ -24,18 +25,20 @@ namespace AdvancedForestBrush
                 .WithAll<CreationDefinition, ObjectDefinition, Updated>()
                 .WithNone<Deleted, Overridden>()
                 .Build();
+            RequireForUpdate(m_Definitions);
         }
 
         protected override void OnUpdate()
         {
-            if (!ForestBrushState.PanelVisible || !ForestSpeciesPalette.Active ||
-                ForestSpeciesPalette.Prefabs.Count == 0 ||
+            if (!ForestBrushState.PanelVisible ||
                 m_ToolSystem.activeTool != m_ObjectToolSystem ||
                 m_ObjectToolSystem.actualMode != ObjectToolSystem.Mode.Brush)
             {
                 return;
             }
 
+            bool usePalette = ForestSpeciesPalette.Active && ForestSpeciesPalette.Prefabs.Count > 0;
+            var ages = (AgeMask)(Mod.Settings?.TreeAgeMask ?? (int)AgeMask.Mature);
             using NativeArray<Entity> entities = m_Definitions.ToEntityArray(Allocator.Temp);
             foreach (Entity entity in entities)
             {
@@ -49,30 +52,43 @@ namespace AdvancedForestBrush
 
                 uint hash = math.hash(new uint3(math.asuint(definition.m_Position.x),
                     math.asuint(definition.m_Position.z), (uint)creation.m_RandomSeed));
-                Entity replacement = ForestSpeciesPalette.Select(hash);
-                if (replacement == Entity.Null)
+                if (usePalette)
                 {
-                    // Do not fall back to the game's selection when all entries are disabled.
-                    EntityManager.DestroyEntity(entity);
-                    continue;
-                }
-                if (!EntityManager.Exists(replacement) ||
-                    (!EntityManager.HasComponent<PlantData>(replacement) &&
-                     !EntityManager.HasComponent<TreeData>(replacement)))
-                {
-                    continue;
+                    Entity replacement = ForestSpeciesPalette.Select(hash);
+                    if (replacement == Entity.Null)
+                    {
+                        // Do not fall back to the game's selection when all entries are disabled.
+                        EntityManager.DestroyEntity(entity);
+                        continue;
+                    }
+                    if (!EntityManager.Exists(replacement) ||
+                        (!EntityManager.HasComponent<PlantData>(replacement) &&
+                         !EntityManager.HasComponent<TreeData>(replacement)))
+                    {
+                        continue;
+                    }
+
+                    if (ForestBrushState.SpeciesGrouping != 0 &&
+                        !ForestPlacementFilterSystem.KeepSpecies(
+                            definition.m_Position, replacement, creation.m_RandomSeed))
+                    {
+                        EntityManager.DestroyEntity(entity);
+                        continue;
+                    }
+
+                    creation.m_Prefab = replacement;
+                    EntityManager.SetComponentData(entity, creation);
                 }
 
-                if (ForestBrushState.SpeciesGrouping != 0 &&
-                    !ForestPlacementFilterSystem.KeepSpecies(
-                        definition.m_Position, replacement, creation.m_RandomSeed))
+                if (creation.m_Original == Entity.Null &&
+                    (creation.m_Flags & CreationFlags.Delete) == 0 &&
+                    EntityManager.HasComponent<TreeData>(creation.m_Prefab))
                 {
-                    EntityManager.DestroyEntity(entity);
-                    continue;
+                    // Resolve the brush age for the final species just before object generation.
+                    var ageRandom = new Random(math.max(1u, hash ^ 0x9e3779b9u));
+                    definition.m_Age = ToolUtils.GetRandomAge(ref ageRandom, ages);
+                    EntityManager.SetComponentData(entity, definition);
                 }
-
-                creation.m_Prefab = replacement;
-                EntityManager.SetComponentData(entity, creation);
             }
         }
     }

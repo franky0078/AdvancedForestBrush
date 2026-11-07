@@ -40,7 +40,6 @@ const circleBrushSize$ = bindValue<number>(mod.id, "CircleBrushSize");
 const rotation$ = bindValue<number>(mod.id, "Rotation");
 const polygonPointCount$ = bindValue<number>(mod.id, "PolygonPointCount");
 const polygonClosed$ = bindValue<boolean>(mod.id, "PolygonClosed");
-const selectedAges$ = bindValue<number>("Tree_Controller", "SelectedAges");
 const anarchyEnabled$ = bindValue<boolean>("Anarchy", "AnarchyEnabled");
 const ANARCHY_STANDARD_ICON = "coui://uil/Standard/Anarchy.svg";
 const ANARCHY_COLORED_ICON = "coui://uil/Colored/Anarchy.svg";
@@ -49,10 +48,9 @@ const TREE_AGE = {
     Sapling: 1,
     Young: 2,
     Mature: 4,
-    Elderly: 8,
-    Dead: 16,
-    Stump: 32
+    Elderly: 8
 } as const;
+const selectedAges$ = bindValue<number>(mod.id, "TreeAgeMask", TREE_AGE.Mature);
 const NATURAL_AGE_MASK =
     TREE_AGE.Sapling | TREE_AGE.Young | TREE_AGE.Mature | TREE_AGE.Elderly;
 
@@ -778,26 +776,6 @@ export const AdvancedForestBrushPanel = () => {
         ["elderlyTree", TREE_AGE.Elderly, t.elderlyTree, t.elderlyTreeTip]
     ];
 
-    const toggleTreeAge = (age: number) =>
-        trigger("Tree_Controller", "ChangeSelectedAge", age);
-
-    const selectNaturalAgeMix = () => {
-        const supportedAges = [
-            TREE_AGE.Sapling,
-            TREE_AGE.Young,
-            TREE_AGE.Mature,
-            TREE_AGE.Elderly,
-            TREE_AGE.Dead,
-            TREE_AGE.Stump
-        ];
-
-        for (const age of supportedAges) {
-            const selected = (selectedAges & age) === age;
-            const wanted = (NATURAL_AGE_MASK & age) === age;
-            if (selected !== wanted) toggleTreeAge(age);
-        }
-    };
-
     return (
         <Portal>
             {target ? createPortal(launcher, target) : null}
@@ -887,13 +865,13 @@ export const AdvancedForestBrushPanel = () => {
                                 })}
                                 {tooltipButton(
                                     "ageNatural",
-                                    (selectedAges & 63) === NATURAL_AGE_MASK,
+                                    selectedAges === NATURAL_AGE_MASK,
                                     t.naturalAge,
                                     t.naturalAgeTip,
-                                    selectNaturalAgeMix
+                                    () => fire("SetTreeAgeMask", NATURAL_AGE_MASK)
                                 )}
                                 {ageModes.map(([glyph, age, title, description]) =>
-                                    tooltipButton(glyph, (selectedAges & age) === age, title, description, () => toggleTreeAge(age))
+                                    tooltipButton(glyph, (selectedAges & age) === age, title, description, () => fire("ToggleTreeAge", age))
                                 )}
                             </div>
                         </div>

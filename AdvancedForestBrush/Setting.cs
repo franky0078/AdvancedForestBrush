@@ -2,6 +2,7 @@ using Colossal.IO.AssetDatabase;
 using Game.Modding;
 using Game.Input;
 using Game.Settings;
+using Game.Tools;
 using Unity.Mathematics;
 
 namespace AdvancedForestBrush
@@ -77,6 +78,19 @@ namespace AdvancedForestBrush
         private int m_DefaultNoiseStrength;
         private ForestSpeciesGrouping m_DefaultSpeciesGrouping;
         private bool m_EnableDiagnosticLogging;
+        private int m_TreeAgeMask;
+
+        [SettingsUIHidden]
+        public int TreeAgeMask
+        {
+            get => m_TreeAgeMask;
+            set
+            {
+                const int supportedAges = (int)(AgeMask.Sapling | AgeMask.Young | AgeMask.Mature | AgeMask.Elderly);
+                int ages = value & supportedAges;
+                m_TreeAgeMask = ages == 0 ? (int)AgeMask.Mature : ages;
+            }
+        }
 
         [SettingsUIHidden]
         public int PaletteWindowLeft { get; set; }
@@ -284,6 +298,7 @@ namespace AdvancedForestBrush
 
         public override void SetDefaults()
         {
+            TreeAgeMask = (int)AgeMask.Mature;
             PathGap = ForestBrushState.PathGap = 4;
             PathWidth = ForestBrushState.PathWidth = 100;
             PathTransition = ForestBrushState.PathTransition = 20;

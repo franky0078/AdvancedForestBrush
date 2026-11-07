@@ -7,9 +7,7 @@
 	<ShortDescription Value="Create natural forests with custom brush shapes, distribution patterns, density controls and tree ages." />
 
 	<LongDescription>
-		**Advanced Forest Brush**
-
-		Advanced Forest Brush expands vegetation placement
+		**Advanced Forest Brush** expands vegetation placement
 
 
 		**Required dependency**
@@ -120,7 +118,7 @@
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="1.1.3" />
+	<ModVersion Value="1.1.4" />
 	<GameVersion Value="1.6.*" />
 
 	
@@ -130,7 +128,7 @@
 	<ChangeLog>
 		Latest changes
 
-		- bugfix for tree age selection
+		- fix tree age selection not working correctly with Tree Controller
 	</ChangeLog>
 
 	<!--Optional external links for your own mod.-->
