@@ -196,6 +196,17 @@ namespace AdvancedForestBrush
             return HasValidCursor && Contains(worldPosition, CursorPosition);
         }
 
+        internal static float2 PatternPosition(float3 worldPosition, float3 shapeCenter)
+        {
+            float2 offset = worldPosition.xz - shapeCenter.xz;
+            if (Shape == ForestBrushShape.Circle) return offset;
+            float radians = math.radians(RotationDegrees);
+            float sine = math.sin(radians);
+            float cosine = math.cos(radians);
+            return new float2(offset.x * cosine - offset.y * sine,
+                offset.x * sine + offset.y * cosine);
+        }
+
         public static bool Contains(float3 worldPosition, float3 shapeCenter)
         {
             float2 point = new float2(worldPosition.x, worldPosition.z);
@@ -205,13 +216,7 @@ namespace AdvancedForestBrush
                 return math.distancesq(point, shapeCenter.xz) <= CircleBrushRadius * CircleBrushRadius;
             }
 
-            float2 offset = point - new float2(shapeCenter.x, shapeCenter.z);
-            float radians = math.radians(RotationDegrees);
-            float sine = math.sin(radians);
-            float cosine = math.cos(radians);
-            float2 local = new float2(
-                offset.x * cosine - offset.y * sine,
-                offset.x * sine + offset.y * cosine);
+            float2 local = PatternPosition(worldPosition, shapeCenter);
 
             if (Shape == ForestBrushShape.Polygon)
             {

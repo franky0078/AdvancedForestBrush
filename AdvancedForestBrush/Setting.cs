@@ -6,10 +6,13 @@ using Unity.Mathematics;
 
 namespace AdvancedForestBrush
 {
+    public enum ForestPreviewMode { Legacy, Detailed }
+    public enum RoadPreviewMode { Legacy, Normal, Detailed }
+
     [FileLocation(nameof(AdvancedForestBrush))]
-    [SettingsUITabOrder(kSection, kControlsSection)]
-    [SettingsUIGroupOrder(kDefaultsGroup, kControlsGroup, kAboutGroup)]
-    [SettingsUIShowGroupName(kDefaultsGroup, kControlsGroup, kAboutGroup)]
+    [SettingsUITabOrder(kSection, kPreviewSection, kControlsSection)]
+    [SettingsUIGroupOrder(kDefaultsGroup, kForestPreviewGroup, kRoadPreviewGroup, kControlsGroup, kAboutGroup)]
+    [SettingsUIShowGroupName(kDefaultsGroup, kForestPreviewGroup, kRoadPreviewGroup, kControlsGroup, kAboutGroup)]
     [SettingsUIMouseAction(kRotateAction, ActionType.Button,
         SettingsUIInputActionAttribute.kDefaultRebindOptions,
         ModifierOptions.Allow, true, usages: new[] { Usages.kToolUsage })]
@@ -25,6 +28,9 @@ namespace AdvancedForestBrush
     public sealed class Setting : ModSetting
     {
         public const string kSection = "Main";
+        public const string kPreviewSection = "Preview";
+        public const string kForestPreviewGroup = "ForestPreview";
+        public const string kRoadPreviewGroup = "RoadPreview";
         public const string kControlsSection = "Controls";
         public const string kDefaultsGroup = "Defaults";
         public const string kControlsGroup = "Bindings";
@@ -222,11 +228,35 @@ namespace AdvancedForestBrush
             }
         }
 
-        [SettingsUISection(kSection, kDefaultsGroup)]
+        // Retain the old fields for loading settings written by earlier versions.
+        // A missing mode falls back to those fields, independently of load order.
+        private int m_ForestPreviewMode = -1;
+        private int m_RoadPreviewMode = -1;
+
+        [SettingsUIHidden]
         public bool DetailedPathPreview { get; set; }
 
-        [SettingsUISection(kSection, kDefaultsGroup)]
+        [SettingsUIHidden]
         public bool LegacyPathPreview { get; set; }
+
+        [SettingsUISection(kPreviewSection, kForestPreviewGroup)]
+        public ForestPreviewMode ForestPreview
+        {
+            get => m_ForestPreviewMode < 0
+                ? (DetailedPathPreview ? ForestPreviewMode.Detailed : ForestPreviewMode.Legacy)
+                : (ForestPreviewMode)m_ForestPreviewMode;
+            set => m_ForestPreviewMode = math.clamp((int)value, 0, 1);
+        }
+
+        [SettingsUISection(kPreviewSection, kRoadPreviewGroup)]
+        public RoadPreviewMode RoadPreview
+        {
+            get => m_RoadPreviewMode < 0
+                ? (LegacyPathPreview ? RoadPreviewMode.Legacy
+                    : DetailedPathPreview ? RoadPreviewMode.Detailed : RoadPreviewMode.Normal)
+                : (RoadPreviewMode)m_RoadPreviewMode;
+            set => m_RoadPreviewMode = math.clamp((int)value, 0, 2);
+        }
 
         [SettingsUISection(kSection, kDefaultsGroup)]
         public bool RandomVegetationRotation { get; set; }
@@ -263,6 +293,8 @@ namespace AdvancedForestBrush
             ForestBrushState.PathForest = false;
             DetailedPathPreview = false;
             LegacyPathPreview = false;
+            m_ForestPreviewMode = -1;
+            m_RoadPreviewMode = -1;
             RandomVegetationRotation = false;
             DefaultShape = ForestBrushShape.Circle;
             DefaultCircleBrushSize = 100;

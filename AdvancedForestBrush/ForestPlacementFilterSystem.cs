@@ -13,11 +13,15 @@ namespace AdvancedForestBrush
     public partial class ForestPlacementFilterSystem : GameSystemBase
     {
         private EntityQuery m_DefinitionQuery;
-        private EntityQuery m_BrushDefinitionQuery;
         private ForestPathNetworkSystem m_PathNetwork;
         private ToolSystem m_ToolSystem;
         private ObjectToolSystem m_ObjectToolSystem;
         private ToolRaycastSystem m_ToolRaycastSystem;
+        private float m_NextDiagnostic;
+        private int m_DiagnosticFrames, m_DiagnosticCandidates, m_DiagnosticKept;
+        private int m_DiagnosticShape, m_DiagnosticPath, m_DiagnosticDensity;
+        private int m_DiagnosticNoise, m_DiagnosticSpecies;
+        private float m_DiagnosticDistance;
 
         protected override void OnCreate()
         {
@@ -28,10 +32,6 @@ namespace AdvancedForestBrush
             m_ToolRaycastSystem = World.GetOrCreateSystemManaged<ToolRaycastSystem>();
             m_DefinitionQuery = SystemAPI.QueryBuilder()
                 .WithAll<CreationDefinition, ObjectDefinition, Updated>()
-                .WithNone<Deleted, Overridden>()
-                .Build();
-            m_BrushDefinitionQuery = SystemAPI.QueryBuilder()
-                .WithAll<CreationDefinition, BrushDefinition, Updated>()
                 .WithNone<Deleted, Overridden>()
                 .Build();
         }
@@ -48,7 +48,7 @@ namespace AdvancedForestBrush
             bool customShape =
                 ForestBrushState.Shape != ForestBrushShape.Circle;
 
-            bool detailedPreview = Mod.Settings?.DetailedPathPreview ?? false;
+            bool detailedPreview = ForestBrushPreviewSystem.DetailedPreview;
             bool randomRotation = Mod.Settings?.RandomVegetationRotation ?? false;
 
             if (!randomRotation && !detailedPreview && !ForestBrushState.PathForest && !customShape &&
@@ -56,6 +56,12 @@ namespace AdvancedForestBrush
                 ForestBrushState.SpeciesGrouping == 0 &&
                 ForestBrushState.DensityPercent >= 100)
             {
+                return;
+            }
+
+            if (m_DefinitionQuery.IsEmptyIgnoreFilter)
+            {
+                LogPlacementCounts(0, 0, 0, 0, 0, 0, 0);
                 return;
             }
 
@@ -69,21 +75,11 @@ namespace AdvancedForestBrush
 
             if (ForestBrushState.PathForest) m_PathNetwork.EnsureCache(shapeCenter);
 
-            if (customShape || ForestBrushPreviewSystem.UsePatternPreview)
-            {
-                using NativeArray<Entity> brushDefinitionEntities =
-                    m_BrushDefinitionQuery.ToEntityArray(Allocator.Temp);
-
-                foreach (Entity entity in brushDefinitionEntities)
-                {
-                    if (EntityManager.Exists(entity))
-                    {
-                        EntityManager.DestroyEntity(entity);
-                    }
-                }
-            }
-
             using NativeArray<Entity> entities = m_DefinitionQuery.ToEntityArray(Allocator.Temp);
+            using EntityCommandBuffer commands = new EntityCommandBuffer(Allocator.Temp);
+            int candidates = 0, kept = 0, shapeRejected = 0, pathRejected = 0;
+            int densityRejected = 0, noiseRejected = 0, speciesRejected = 0;
+            float maximumDistance = 0f;
             foreach (Entity entity in entities)
             {
                 if (!EntityManager.TryGetComponent(entity, out CreationDefinition creation) ||
@@ -92,12 +88,15 @@ namespace AdvancedForestBrush
                     continue;
                 }
 
-
                 if (!EntityManager.HasComponent<PlantData>(creation.m_Prefab) &&
                     !EntityManager.HasComponent<TreeData>(creation.m_Prefab))
                 {
                     continue;
                 }
+                candidates++;
+                if (Mod.DiagnosticLoggingEnabled)
+                    maximumDistance = math.max(maximumDistance,
+                        math.distance(definition.m_Position.xz, shapeCenter.xz));
 
                 bool outsideShape =
                     ForestBrushState.SuppressPolygonPlacement ||
@@ -107,35 +106,81 @@ namespace AdvancedForestBrush
                           definition.m_Position,
                           shapeCenter)));
 
-                bool rejectedByPath = ForestBrushState.PathForest &&
-                    !m_PathNetwork.Keep(definition.m_Position);
-
-                bool rejectedByDensity = !ForestBrushState.PathForest && !KeepDensity(
-                    definition.m_Position, creation.m_RandomSeed);
-
-                bool rejectedByNoise =
-                    !ForestBrushState.PathForest &&
-                    ForestBrushState.NoiseMode != ForestNoiseMode.Uniform &&
-                    !Keep(definition.m_Position, creation.m_RandomSeed);
-
+                if (outsideShape)
+                {
+                    shapeRejected++;
+                    commands.DestroyEntity(entity);
+                    continue;
+                }
+                if (ForestBrushState.PathForest && !m_PathNetwork.Keep(definition.m_Position, shapeCenter))
+                {
+                    pathRejected++;
+                    commands.DestroyEntity(entity);
+                    continue;
+                }
+                if (!ForestBrushState.PathForest && !KeepDensity(definition.m_Position, creation.m_RandomSeed))
+                {
+                    densityRejected++;
+                    commands.DestroyEntity(entity);
+                    continue;
+                }
+                if (!ForestBrushState.PathForest && ForestBrushState.NoiseMode != ForestNoiseMode.Uniform &&
+                    !Keep(definition.m_Position, creation.m_RandomSeed, shapeCenter))
+                {
+                    noiseRejected++;
+                    commands.DestroyEntity(entity);
+                    continue;
+                }
                 bool rejectedBySpecies =
                     ForestBrushState.SpeciesGrouping != 0 &&
                     !(ForestSpeciesPalette.Active && ForestSpeciesPalette.Prefabs.Count > 0) &&
                     !KeepSpecies(definition.m_Position, creation.m_Prefab,
                         creation.m_RandomSeed);
 
-                if (outsideShape || rejectedByPath || rejectedByDensity || rejectedByNoise || rejectedBySpecies)
+                if (rejectedBySpecies)
                 {
-                    EntityManager.DestroyEntity(entity);
+                    speciesRejected++;
+                    commands.DestroyEntity(entity);
+                    continue;
                 }
-                else if (randomRotation)
+                kept++;
+                if (randomRotation)
                 {
                     float angle = ForestBrushState.PlacementRandom(definition.m_Position,
                         (uint)creation.m_RandomSeed ^ 0x4a39b70du) * (2f * math.PI);
                     definition.m_Rotation = quaternion.RotateY(angle);
-                    EntityManager.SetComponentData(entity, definition);
+                    commands.SetComponent(entity, definition);
                 }
             }
+            commands.Playback(EntityManager);
+            LogPlacementCounts(candidates, kept, shapeRejected, pathRejected,
+                densityRejected, noiseRejected, speciesRejected, maximumDistance);
+        }
+
+        private void LogPlacementCounts(int candidates, int kept, int shape, int path,
+            int density, int noise, int species, float maximumDistance = 0f)
+        {
+            if (!Mod.DiagnosticLoggingEnabled) return;
+            m_DiagnosticFrames++;
+            m_DiagnosticCandidates += candidates;
+            m_DiagnosticKept += kept;
+            m_DiagnosticShape += shape;
+            m_DiagnosticPath += path;
+            m_DiagnosticDensity += density;
+            m_DiagnosticNoise += noise;
+            m_DiagnosticSpecies += species;
+            m_DiagnosticDistance = math.max(m_DiagnosticDistance, maximumDistance);
+            if (UnityEngine.Time.unscaledTime < m_NextDiagnostic) return;
+            m_NextDiagnostic = UnityEngine.Time.unscaledTime + 1f;
+            Mod.LogDiagnosticInfo($"Forest brush candidates over {m_DiagnosticFrames} updates: " +
+                $"input={m_DiagnosticCandidates}, kept={m_DiagnosticKept}, " +
+                $"rejected shape={m_DiagnosticShape}, road={m_DiagnosticPath}, density={m_DiagnosticDensity}, " +
+                $"noise={m_DiagnosticNoise}, species={m_DiagnosticSpecies}; max cursor distance={m_DiagnosticDistance:F1}m; " +
+                $"cursor={ForestBrushState.CursorPosition.x:F1},{ForestBrushState.CursorPosition.z:F1}.");
+            m_DiagnosticFrames = m_DiagnosticCandidates = m_DiagnosticKept = 0;
+            m_DiagnosticShape = m_DiagnosticPath = m_DiagnosticDensity = 0;
+            m_DiagnosticNoise = m_DiagnosticSpecies = 0;
+            m_DiagnosticDistance = 0f;
         }
 
         private static bool KeepDensity(float3 position, int randomSeed)
@@ -169,9 +214,9 @@ namespace AdvancedForestBrush
             return random < chance;
         }
 
-        private static bool Keep(float3 position, int randomSeed)
+        private static bool Keep(float3 position, int randomSeed, float3 shapeCenter)
         {
-            float chance = NoiseProbability(position.xz);
+            float chance = NoiseProbability(ForestBrushState.PatternPosition(position, shapeCenter));
             if (ForestBrushState.NoiseMode == ForestNoiseMode.Clusters)
             {
                 uint hash = math.hash(new uint4(math.asuint(position.x),

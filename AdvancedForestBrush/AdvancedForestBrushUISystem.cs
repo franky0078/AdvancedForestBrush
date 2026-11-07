@@ -35,6 +35,22 @@ namespace AdvancedForestBrush
 
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "IsVisible", IsVegetationContext));
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "PanelVisible", () => ForestBrushState.PanelVisible));
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "ForestPreview",
+                () => (int)(Mod.Settings?.ForestPreview ?? ForestPreviewMode.Legacy)));
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "RoadPreview",
+                () => (int)(Mod.Settings?.RoadPreview ?? RoadPreviewMode.Normal)));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "SetForestPreview", value =>
+            {
+                if (Mod.Settings == null) return;
+                Mod.Settings.ForestPreview = (ForestPreviewMode)value;
+                Mod.Settings.ApplyAndSave();
+            }));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "SetRoadPreview", value =>
+            {
+                if (Mod.Settings == null) return;
+                Mod.Settings.RoadPreview = (RoadPreviewMode)value;
+                Mod.Settings.ApplyAndSave();
+            }));
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "RandomVegetationRotation",
                 () => Mod.Settings?.RandomVegetationRotation ?? false));
             AddBinding(new TriggerBinding(Mod.Id, "ToggleRandomVegetationRotation", () =>

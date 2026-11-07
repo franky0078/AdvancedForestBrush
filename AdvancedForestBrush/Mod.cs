@@ -70,6 +70,8 @@ namespace AdvancedForestBrush
             updateSystem.UpdateBefore<ForestPlacementFilterSystem>(SystemUpdatePhase.Modification1);
             updateSystem.UpdateBefore<ForestSpeciesPlacementSystem, GenerateObjectsSystem>(
                 SystemUpdatePhase.Modification1);
+            updateSystem.UpdateBefore<ForestTreePreserveAgeSystem, ApplyObjectsSystem>(
+                SystemUpdatePhase.ApplyTool);
         }
 
         public void OnDispose()

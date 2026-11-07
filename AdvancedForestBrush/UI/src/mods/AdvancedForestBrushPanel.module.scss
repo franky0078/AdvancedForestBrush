@@ -5,7 +5,19 @@
 .toolModeButton svg { width:24rem; height:24rem; fill:currentColor; }
 .toolModeButton:hover,.stepButton:hover,.iconButton:hover { background:rgba(58,89,108,.9); }
 .launcherSelected { border-color:#70db91; background:linear-gradient(#4d9dd8,#2670bd); }
-.header { width:100%; display:flex; align-items:center; justify-content:flex-end; min-height:32rem; color:#58ccff; user-select:none; }
+.header { position:relative; width:100%; display:flex; align-items:center; justify-content:flex-end; min-height:32rem; color:#58ccff; user-select:none; }
+.previewOptionsAnchor { position:absolute; left:8rem; top:calc(3rem + 1px); width:30rem; height:26rem; margin:0; }
+.previewOptionsButton { display:flex; align-items:center; justify-content:center; width:30rem; height:26rem; padding:0; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#e5f0f8; cursor:pointer; }
+.previewOptionsButton:hover { background:rgba(58,89,108,.9); }
+.previewOptionsButton svg { width:21rem; height:21rem; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+.previewOptionsButton circle { fill:#14251f; }
+.previewOptionsMenu { position:fixed !important; right:auto !important; bottom:auto !important; display:block !important; width:334rem !important; min-width:334rem !important; max-width:334rem !important; height:auto !important; box-sizing:border-box; margin:0 !important; padding:9rem !important; overflow:visible !important; z-index:200; color:#eaf1f5; border-radius:8rem; background:rgba(72,94,83,.66); backdrop-filter:blur(12rem); -webkit-backdrop-filter:blur(12rem); }
+.previewOptionsMenu strong { display:block; margin-bottom:8rem; font-size:12rem; }
+.previewChoices { display:flex; align-items:stretch; width:100%; }
+.previewChoiceSlot { flex:1 1 0; min-width:0; }
+.previewChoiceSlot + .previewChoiceSlot { margin-left:5rem; }
+.previewChoice { width:100%; min-height:29rem; padding:4rem 3rem; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#f0f6fa; font-size:11rem; white-space:normal; cursor:pointer; }
+.previewChoice:hover { background:rgba(58,89,108,.9); }
 .backButton { display:flex; align-items:center; justify-content:center; width:26rem; height:26rem; flex:0 0 30rem; padding:0; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#e5f0f8; margin-right:10rem; margin-top:3rem; }
 .backButton:hover { background:rgba(58,89,108,.9); color:#fff; }
 .anarchyButton { display:flex; align-items:center; justify-content:center; width:26rem; height:26rem; flex:0 0 30rem; padding:0; border:1rem solid rgba(190,213,232,.25); border-radius:4rem; background:rgba(5,13,18,.82); color:#fff; margin-right:10rem; margin-top:3rem; cursor:pointer; }

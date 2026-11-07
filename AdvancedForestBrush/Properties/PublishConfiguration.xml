@@ -57,9 +57,9 @@
 		- Plant Frequency species list option for controlling the frequency of each plant in the list
 		- Support for the game and editor
 		- English, German, Spanish, Italian, French localization
-		
-		- Detailed forest preview (Beta)
-		  optional detailed preview in the mod options to visualize forest patterns before planting, including noise variations and clearings.
+
+		- Detailed forest preview (Beta), optional detailed preview in the mod options to visualize forest patterns before planting, including noise variations and clearings.
+		- Legacy option to disable new Preview for better Performance on low-end systems
 
 
 		**How to use**
@@ -70,11 +70,11 @@
 		Hold ctrl + right mouse button and move horizontally to rotate the completed polygon.
 		Press Esc or use Reset polygon to start again.
 
-		To mix plants from different pages of the vegetation bar, click **Use species list** in the brush panel.
-		Ctrl + left-click a plant in the vegetation bar to add it; alternatively, select it and click **Add current plant**.
+		To mix plants from different pages of the vegetation bar, click **Use Vegetation list** in the brush panel.
+		**Ctrl + left-click** a plant in the vegetation bar to add it; alternatively, select it and click **Add current plant**.
 		Scroll the bar and repeat for as many plants as you need.
 		The brush uses the plants in the list even when they are no longer visible in the bar.
-		Remove individual plants with **×**, or click **Clear list**. An empty list uses the game's current selection.
+		Remove individual plants with **X**, or click **Clear list**. An empty list uses the game's current selection.
 		Click **Use game selection** or close the list window to return to normal selection.
 		Change the add-to-list combination under **Options → Advanced Forest Brush → Key bindings**.
 
@@ -113,13 +113,14 @@
 	<Screenshot Value="Properties/Screenshot06.jpg" />
 	<Screenshot Value="Properties/Screenshot07.jpg" />
 	<Screenshot Value="Properties/Screenshot08.jpg" />
-	<Screenshot Value="Properties/Screenshot09.jpg" /> 
+	<Screenshot Value="Properties/Screenshot09.jpg" />
+	<Screenshot Value="Properties/Screenshot10.jpg" />
 
 	<Tag Value="Code Mod" />
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="1.1.1" />
+	<ModVersion Value="1.1.3" />
 	<GameVersion Value="1.6.*" />
 
 	
@@ -127,10 +128,9 @@
 	<Dependency Id="74417" DisplayName="Unified Icon Library" Version="1.0.13" />
 
 	<ChangeLog>
-		## Latest changes
+		Latest changes
 
-		- added legacy option to disable new preview for better performance on low-end systems
-
+		- bugfix for tree age selection
 	</ChangeLog>
 
 	<!--Optional external links for your own mod.-->

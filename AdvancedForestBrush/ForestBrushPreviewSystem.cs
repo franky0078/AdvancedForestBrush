@@ -6,7 +6,6 @@ using Game.Rendering;
 using Game.Simulation;
 using Game.Tools;
 using System.Collections.Generic;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -18,9 +17,11 @@ namespace AdvancedForestBrush
     [UpdateAfter(typeof(ForestBrushShapeSystem))]
     public partial class ForestBrushPreviewSystem : GameSystemBase
     {
-        private static bool DetailedPreview => Mod.Settings?.DetailedPathPreview ?? false;
+        internal static bool DetailedPreview => ForestBrushState.PathForest
+            ? Mod.Settings?.RoadPreview == RoadPreviewMode.Detailed
+            : Mod.Settings?.ForestPreview == ForestPreviewMode.Detailed;
         internal static bool UsePatternPreview => ForestBrushState.PathForest
-            ? !(Mod.Settings?.LegacyPathPreview ?? false)
+            ? (Mod.Settings?.RoadPreview ?? RoadPreviewMode.Normal) != RoadPreviewMode.Legacy
             : DetailedPreview;
 
         private const int PreviewTextureSize = 128;
@@ -30,28 +31,35 @@ namespace AdvancedForestBrush
         private const float PreviewScale =
             PreviewTextureSize / InnerPixels;
 
-        private EntityQuery m_BrushQuery;
         private EntityQuery m_SettingsQuery;
         private PrefabSystem m_PrefabSystem;
         private TerrainSystem m_TerrainSystem;
-        private readonly Dictionary<Entity, float> m_OriginalOpacities =
-            new Dictionary<Entity, float>();
-        private readonly HashSet<Entity> m_HiddenVanillaBrushes =
-            new HashSet<Entity>();
+        private System.Action<ScriptableRenderContext, List<Camera>> m_NativeBrushRender;
+        private bool m_OwnsBrushRenderCallback;
         private Mesh m_Mesh;
         private MaterialPropertyBlock m_Properties;
         private ForestPathNetworkSystem m_PathNetwork;
         private Texture2D m_PathTexture;
         private uint m_PathSignature;
-        private uint m_PathSettingsSignature;
+        private uint m_PatternSignature;
+        private bool m_PatternBuilt;
+        private bool[] m_PatternInside;
+        private int[] m_PatternRoadIndices;
+        private const int RoadMaskSize = 64;
+        private readonly float2[] m_RoadSamplePositions = new float2[RoadMaskSize * RoadMaskSize];
+        private readonly float[] m_RoadDistances = new float[RoadMaskSize * RoadMaskSize];
+        private readonly bool[] m_RoadSampleNeeded = new bool[RoadMaskSize * RoadMaskSize];
+        private int m_RoadDistanceIndex;
+        private ForestPathNetworkSystem.PatternSample[] m_PathPattern;
+        private Color32[] m_PatternPixels;
         private uint m_PendingPathSignature;
+        private uint m_PendingPathGeometry;
         private bool m_PathPending;
         private int m_PathPixelIndex;
         private float3 m_PendingPathCenter;
         private float m_PendingPathWidth, m_PendingPathLength, m_PendingPathRotation;
         private float m_PendingPathSine, m_PendingPathCosine;
         private readonly System.Diagnostics.Stopwatch m_PathPreviewTimer = new System.Diagnostics.Stopwatch();
-        private const int PathPixelsPerFrame = 2048;
         private const double PathPreviewBudgetMs = 1.25;
         private bool m_PathBuilt;
         private float3 m_PathCenter;
@@ -70,25 +78,36 @@ namespace AdvancedForestBrush
             m_PathNetwork = World.GetOrCreateSystemManaged<ForestPathNetworkSystem>();
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
             m_TerrainSystem = World.GetOrCreateSystemManaged<TerrainSystem>();
-            m_BrushQuery = GetEntityQuery(
-                ComponentType.ReadWrite<Brush>(),
-                ComponentType.Exclude<Deleted>());
             m_SettingsQuery = GetEntityQuery(
                 ComponentType.ReadOnly<OverlayConfigurationData>());
             m_BrushTexture = Shader.PropertyToID("_BrushTexture");
             m_BrushOpacity = Shader.PropertyToID("_BrushOpacity");
+            BrushRenderSystem brushRenderer = World.GetOrCreateSystemManaged<BrushRenderSystem>();
+            var renderMethod = typeof(BrushRenderSystem).GetMethod("Render",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, new[] { typeof(ScriptableRenderContext), typeof(List<Camera>) }, null);
+            if (renderMethod == null)
+            {
+                Mod.Log?.Error("Native brush Render callback was not found; keeping the game renderer unchanged.");
+                return;
+            }
+            m_NativeBrushRender = (System.Action<ScriptableRenderContext, List<Camera>>)
+                System.Delegate.CreateDelegate(typeof(System.Action<ScriptableRenderContext, List<Camera>>),
+                    brushRenderer, renderMethod);
+            RenderPipelineManager.beginContextRendering -= m_NativeBrushRender;
             RenderPipelineManager.beginContextRendering += Render;
+            m_OwnsBrushRenderCallback = true;
         }
 
         protected override void OnUpdate()
         {
+            if (!m_OwnsBrushRenderCallback) return;
             bool customPreview =
                 ForestBrushState.PanelVisible &&
                 (UsePatternPreview || ForestBrushState.Shape != ForestBrushShape.Circle);
 
             if (!customPreview)
             {
-                RestoreVanillaBrush();
                 m_PathBuilt = false;
                 m_PathPending = false;
                 return;
@@ -103,36 +122,6 @@ namespace AdvancedForestBrush
             {
                 m_PathBuilt = false;
                 m_PathPending = false;
-            }
-
-            using NativeArray<Entity> entities =
-                m_BrushQuery.ToEntityArray(Allocator.Temp);
-
-            foreach (Entity entity in entities)
-            {
-                if (!EntityManager.TryGetComponent(entity, out Brush brush))
-                {
-                    continue;
-                }
-
-                if (brush.m_Opacity > 0.001f)
-                {
-                    m_OriginalOpacities[entity] = brush.m_Opacity;
-                    m_PreviewOpacity = brush.m_Opacity;
-                }
-
-                if (brush.m_Opacity != 0f)
-                {
-                    brush.m_Opacity = 0f;
-                    EntityManager.SetComponentData(entity, brush);
-                }
-
-                // BrushRenderSystem explicitly excludes Hidden entities
-                if (!EntityManager.HasComponent<Hidden>(entity))
-                {
-                    EntityManager.AddComponent<Hidden>(entity);
-                    m_HiddenVanillaBrushes.Add(entity);
-                }
             }
 
             if ((ForestBrushState.Shape == ForestBrushShape.Square ||
@@ -150,49 +139,18 @@ namespace AdvancedForestBrush
             }
         }
 
-        private void RestoreVanillaBrush()
-        {
-            foreach (Entity entity in m_HiddenVanillaBrushes)
-            {
-                if (EntityManager.Exists(entity) &&
-                    EntityManager.HasComponent<Hidden>(entity))
-                {
-                    EntityManager.RemoveComponent<Hidden>(entity);
-                }
-            }
-
-            m_HiddenVanillaBrushes.Clear();
-
-            if (m_OriginalOpacities.Count == 0)
-            {
-                return;
-            }
-
-            foreach (KeyValuePair<Entity, float> pair in m_OriginalOpacities)
-            {
-                if (!EntityManager.Exists(pair.Key) ||
-                    !EntityManager.HasComponent<Brush>(pair.Key))
-                {
-                    continue;
-                }
-
-                Brush brush = EntityManager.GetComponentData<Brush>(pair.Key);
-                if (brush.m_Opacity == 0f)
-                {
-                    brush.m_Opacity = pair.Value;
-                    EntityManager.SetComponentData(pair.Key, brush);
-                }
-            }
-
-            m_OriginalOpacities.Clear();
-        }
-
         private void Render(
             ScriptableRenderContext context,
             List<Camera> cameras)
         {
+
             if (!ForestBrushState.PanelVisible ||
-                !ForestBrushState.HasValidCursor ||
+                (!UsePatternPreview && ForestBrushState.Shape == ForestBrushShape.Circle))
+            {
+                m_NativeBrushRender(context, cameras);
+                return;
+            }
+            if (!ForestBrushState.HasValidCursor ||
                 (!UsePatternPreview && ForestBrushState.Shape == ForestBrushShape.Circle) ||
                 (ForestBrushState.Shape == ForestBrushShape.Polygon &&
                  !ForestBrushState.PolygonClosed) ||
@@ -291,9 +249,9 @@ namespace AdvancedForestBrush
                     ? ForestBrushState.PolygonHalfLength * 2f : width;
             float rotation = ForestBrushState.Shape == ForestBrushShape.Circle ? 0f : ForestBrushState.RotationDegrees;
             float3 center = ForestBrushState.CursorPosition;
-            uint settings = math.hash(new float4(width, length, rotation, (float)ForestBrushState.Shape));
-            settings = math.hash(new uint4(settings,
-                ForestBrushState.PathForest ? (uint)m_PathNetwork.Version : 0u,
+            // Moving or rotating the brush must not regenerate its noise/clearing pattern.
+            uint settings = math.hash(new float3(width, length, (float)ForestBrushState.Shape));
+            settings = math.hash(new uint3(settings,
                 (uint)ForestBrushState.PolygonVersion, ForestBrushState.PathForest ? 1u : 0u));
             settings = math.hash(new uint2(settings, DetailedPreview ? 1u : 0u));
             if (DetailedPreview)
@@ -304,14 +262,45 @@ namespace AdvancedForestBrush
                     (uint)ForestBrushState.Seed, (uint)ForestBrushState.PathSeed));
                 settings = math.hash(new uint4(settings, (uint)ForestBrushState.PathTransition,
                     (uint)ForestBrushState.PathClearings, (uint)ForestBrushState.PathClearingSize));
+                settings = math.hash(new uint2(settings, (uint)ForestBrushState.PathWidth));
             }
-            if (settings != m_PathSettingsSignature)
+            if (!m_PatternBuilt || settings != m_PatternSignature)
             {
-                m_PathSettingsSignature = settings;
+                BuildPattern(width, length);
+                m_PatternSignature = settings;
+                m_PatternBuilt = true;
                 m_PathPending = false;
                 m_PathBuilt = false;
             }
-            uint signature = math.hash(new uint3(settings, math.asuint(center.x), math.asuint(center.z)));
+
+            if (!ForestBrushState.PathForest)
+            {
+                // The overlay material already projects onto terrain.
+                if (!m_PathBuilt)
+                {
+                    m_PathTexture.SetPixels32(m_PatternPixels);
+                    m_PathTexture.Apply(false, false);
+                }
+                m_PathCenter = center;
+                m_PathRotation = rotation;
+                m_PathWidth = width;
+                m_PathLength = length;
+                m_PathBuilt = true;
+                m_PathPending = false;
+                return;
+            }
+
+            uint geometry = math.hash(new uint3((uint)m_PathNetwork.Version,
+                (uint)ForestBrushState.PathGap, (uint)ForestBrushState.PathWidth));
+            // Do not combine rows evaluated against two different road snapshots.
+            if (m_PathPending && geometry != m_PendingPathGeometry)
+                m_PathPending = false;
+            // Sub-pixel mouse jitter does not warrant another complete road mask.
+            float movementStep = math.max(0.125f,
+                math.min(width, length) * PreviewScale / RoadMaskSize * 0.25f);
+            float2 cell = math.floor(center.xz / movementStep);
+            uint signature = math.hash(new uint3(settings, math.asuint(cell.x), math.asuint(cell.y)));
+            signature = math.hash(new uint3(signature, geometry, math.asuint(rotation)));
             if (!m_PathPending)
             {
                 if (m_PathBuilt && signature == m_PathSignature) return;
@@ -322,48 +311,46 @@ namespace AdvancedForestBrush
                 m_PendingPathSine = math.sin(math.radians(rotation));
                 m_PendingPathCosine = math.cos(math.radians(rotation));
                 m_PendingPathSignature = signature;
+                m_PendingPathGeometry = geometry;
                 m_PathPixelIndex = 0;
+                m_RoadDistanceIndex = 0;
                 m_PathPending = true;
             }
-            int textureSize = DetailedPreview ? PreviewTextureSize : 64;
-            if (m_PathTexture != null && m_PathTexture.width != textureSize)
-            {
-                Object.Destroy(m_PathTexture);
-                m_PathTexture = null;
-            }
-            if (m_PathPixels.Length != textureSize * textureSize)
-                m_PathPixels = new Color32[textureSize * textureSize];
-            if (m_PathTexture == null)
-            {
-                m_PathTexture = new Texture2D(textureSize, textureSize,
-                    TextureFormat.RGBA32, false, true)
-                {
-                    name = "Advanced Forest Brush Path Forest",
-                    wrapMode = TextureWrapMode.Clamp,
-                    filterMode = FilterMode.Bilinear
-                };
-            }
-
             m_PathPreviewTimer.Restart();
-            int end = math.min(m_PathPixels.Length, m_PathPixelIndex + (DetailedPreview ? PathPixelsPerFrame : m_PathPixels.Length));
-            float density = DetailedPreview ? math.min(1f, ForestBrushState.DensityPercent / 100f) : 1f;
-            for (; m_PathPixelIndex < end; m_PathPixelIndex++)
+            for (; m_RoadDistanceIndex < m_RoadDistances.Length; m_RoadDistanceIndex++)
             {
-                if ((m_PathPixelIndex & 63) == 0 &&
+                if ((m_RoadDistanceIndex & 63) == 0 &&
                     m_PathPreviewTimer.Elapsed.TotalMilliseconds >= PathPreviewBudgetMs) break;
-                int x = m_PathPixelIndex % textureSize;
-                int y = m_PathPixelIndex / textureSize;
-                float2 local = new float2(((x + 0.5f) / textureSize - 0.5f) * m_PendingPathWidth * PreviewScale,
-                    ((y + 0.5f) / textureSize - 0.5f) * m_PendingPathLength * PreviewScale);
+                if (!m_RoadSampleNeeded[m_RoadDistanceIndex])
+                {
+                    m_RoadDistances[m_RoadDistanceIndex] = 0f;
+                    continue;
+                }
+                float2 local = m_RoadSamplePositions[m_RoadDistanceIndex];
                 float2 world = m_PendingPathCenter.xz + new float2(
                     local.x * m_PendingPathCosine + local.y * m_PendingPathSine,
                     -local.x * m_PendingPathSine + local.y * m_PendingPathCosine);
-                bool inside = ForestBrushState.Shape == ForestBrushShape.Circle
-                    ? math.lengthsq(local) <= m_PendingPathWidth * m_PendingPathWidth * 0.25f
-                    : ForestBrushState.Contains(new float3(world.x, m_PendingPathCenter.y, world.y), m_PendingPathCenter);
-                float chance = !inside ? 0f : ForestBrushState.PathForest
-                    ? m_PathNetwork.Probability(world, DetailedPreview)
-                    : ForestPlacementFilterSystem.NoiseProbability(world);
+                m_RoadDistances[m_RoadDistanceIndex] = m_PathNetwork.InwardDistance(world);
+            }
+            if (m_RoadDistanceIndex < m_RoadDistances.Length)
+            {
+                m_PathPreviewTimer.Stop();
+                return;
+            }
+            float density = DetailedPreview ? math.min(1f, ForestBrushState.DensityPercent / 100f) : 1f;
+            for (; m_PathPixelIndex < m_PathPixels.Length; m_PathPixelIndex++)
+            {
+                if ((m_PathPixelIndex & 63) == 0 &&
+                    m_PathPreviewTimer.Elapsed.TotalMilliseconds >= PathPreviewBudgetMs) break;
+                float chance = 0f;
+                if (m_PatternInside[m_PathPixelIndex])
+                {
+                    // Nearest sampling preserves zero road exclusions instead of
+                    // interpolating positive distances across a road or a gap.
+                    float inward = m_RoadDistances[m_PatternRoadIndices[m_PathPixelIndex]];
+                    chance = DetailedPreview ? m_PathPattern[m_PathPixelIndex].Probability(inward)
+                        : inward > 0f ? 1f : 0f;
+                }
                 m_PathPixels[m_PathPixelIndex] = new Color32(255, 255, 255,
                     (byte)math.round(chance * density * 255f));
             }
@@ -378,6 +365,67 @@ namespace AdvancedForestBrush
             m_PathSignature = m_PendingPathSignature;
             m_PathBuilt = true;
             m_PathPending = false;
+        }
+
+        private void BuildPattern(float width, float length)
+        {
+            int textureSize = DetailedPreview ? PreviewTextureSize : RoadMaskSize;
+            int count = textureSize * textureSize;
+            if (m_PathTexture != null && m_PathTexture.width != textureSize)
+            {
+                Object.Destroy(m_PathTexture);
+                m_PathTexture = null;
+            }
+            if (m_PathTexture == null)
+            {
+                m_PathTexture = new Texture2D(textureSize, textureSize,
+                    TextureFormat.RGBA32, false, true)
+                {
+                    name = "Advanced Forest Brush Path Forest",
+                    wrapMode = TextureWrapMode.Clamp,
+                    filterMode = FilterMode.Bilinear
+                };
+            }
+            if (m_PatternPixels == null || m_PatternPixels.Length != count)
+            {
+                m_PatternInside = new bool[count];
+                m_PatternRoadIndices = new int[count];
+                m_PathPattern = new ForestPathNetworkSystem.PatternSample[count];
+                m_PatternPixels = new Color32[count];
+                m_PathPixels = new Color32[count];
+            }
+
+            for (int i = 0; i < m_RoadSamplePositions.Length; i++)
+                m_RoadSamplePositions[i] = new float2(
+                    ((i % RoadMaskSize + 0.5f) / RoadMaskSize - 0.5f) * width * PreviewScale,
+                    ((i / RoadMaskSize + 0.5f) / RoadMaskSize - 0.5f) * length * PreviewScale);
+            System.Array.Clear(m_RoadSampleNeeded, 0, m_RoadSampleNeeded.Length);
+
+            float density = DetailedPreview ? math.min(1f, ForestBrushState.DensityPercent / 100f) : 1f;
+            for (int i = 0; i < count; i++)
+            {
+                float2 local = new float2(((i % textureSize + 0.5f) / textureSize - 0.5f) * width * PreviewScale,
+                    ((i / textureSize + 0.5f) / textureSize - 0.5f) * length * PreviewScale);
+                bool inside = ForestBrushState.Shape == ForestBrushShape.Circle
+                    ? math.lengthsq(local) <= width * width * 0.25f
+                    : ForestBrushState.Shape == ForestBrushShape.Polygon
+                        ? ForestBrushState.IsPointInsideLocalPolygon(local)
+                        : math.abs(local.x) <= width * 0.5f && math.abs(local.y) <= length * 0.5f;
+                m_PatternRoadIndices[i] = (i / textureSize * RoadMaskSize / textureSize) * RoadMaskSize +
+                    (i % textureSize * RoadMaskSize / textureSize);
+                m_PatternInside[i] = inside;
+                if (inside) m_RoadSampleNeeded[m_PatternRoadIndices[i]] = true;
+                float chance = 0f;
+                if (inside)
+                {
+                    if (ForestBrushState.PathForest && DetailedPreview)
+                        m_PathPattern[i] = ForestPathNetworkSystem.SamplePattern(local);
+                    else if (!ForestBrushState.PathForest)
+                        chance = ForestPlacementFilterSystem.NoiseProbability(local);
+                }
+                m_PatternPixels[i] = new Color32(255, 255, 255,
+                    (byte)math.round(chance * density * 255f));
+            }
         }
 
         private void BuildPolygonTexture()
@@ -563,8 +611,12 @@ namespace AdvancedForestBrush
 
         protected override void OnDestroy()
         {
-            RenderPipelineManager.beginContextRendering -= Render;
-            RestoreVanillaBrush();
+            if (m_OwnsBrushRenderCallback)
+            {
+                RenderPipelineManager.beginContextRendering -= Render;
+                RenderPipelineManager.beginContextRendering += m_NativeBrushRender;
+                m_OwnsBrushRenderCallback = false;
+            }
 
             if (m_Mesh != null)
             {

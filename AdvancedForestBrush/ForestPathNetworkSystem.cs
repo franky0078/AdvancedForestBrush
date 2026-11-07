@@ -13,8 +13,6 @@ using UnityEngine;
 
 namespace AdvancedForestBrush
 {
-    // A local, spatially indexed snapshot shared by the preview and placement filter.
-    // No network scans or ECS access take place in the per-candidate distance test.
     public partial class ForestPathNetworkSystem : GameSystemBase
     {
         private const float CellSize = 64f;
@@ -185,7 +183,23 @@ namespace AdvancedForestBrush
             return math.distance(p, a + delta * t);
         }
 
-        public float Probability(float2 point, bool detailed = true)
+        internal struct PatternSample
+        {
+            public float Edge, Transition, Multiplier;
+
+            public float Probability(float inward)
+            {
+                if (inward <= 0f || inward >= Edge) return 0f;
+                float fade = Transition > 0f
+                    ? math.smoothstep(0f, Transition, inward) *
+                        (1f - math.smoothstep(Edge - Transition, Edge, inward))
+                    : 1f;
+                return math.saturate(fade * Multiplier);
+            }
+        }
+
+        // Only this part depends on the nearby road geometry.
+        internal float InwardDistance(float2 point)
         {
             if (!m_Valid || !m_Cells.TryGetValue(Cell(point), out List<int> candidates)) return 0f;
             float distance = float.MaxValue;
@@ -199,8 +213,11 @@ namespace AdvancedForestBrush
             float inward = distance - ForestBrushState.PathGap;
             if (inward <= 0f || inward >= ForestBrushState.PathWidth) return 0f;
 
-            if (!detailed) return 1f;
+            return inward;
+        }
 
+        internal static PatternSample SamplePattern(float2 point)
+        {
             uint seed = math.hash(new uint2((uint)ForestBrushState.PathSeed, 0x9e3779b9u));
             float2 offset = new float2(seed & 0xffffu, seed >> 16) * 0.0317f;
             float2 p = point / math.max(10f, ForestBrushState.NoiseScale);
@@ -209,25 +226,30 @@ namespace AdvancedForestBrush
             float irregularity = ForestBrushState.NoiseStrength / 100f;
             float edge = ForestBrushState.PathWidth * (1f - broad * 0.25f * irregularity);
             float transition = math.min(ForestBrushState.PathTransition, edge * 0.45f);
-            float chance = math.smoothstep(0f, transition, inward) *
-                (1f - math.smoothstep(edge - transition, edge, inward));
-            chance *= math.lerp(1f, 0.3f + broad * 0.5f + detail * 0.2f, irregularity);
+            float multiplier = math.lerp(1f, 0.3f + broad * 0.5f + detail * 0.2f, irregularity);
             if (ForestBrushState.PathClearings > 0)
             {
                 float clearing = noise.snoise(point / ForestBrushState.PathClearingSize +
                     offset + new float2(71.3f, -23.7f)) * 0.5f + 0.5f;
                 float threshold = 0.12f + ForestBrushState.PathClearings / 100f * 0.75f;
-                chance *= math.smoothstep(threshold, threshold + 0.12f, clearing);
+                multiplier *= math.smoothstep(threshold, threshold + 0.12f, clearing);
             }
-            return math.saturate(chance);
+            return new PatternSample { Edge = edge, Transition = transition, Multiplier = multiplier };
         }
 
-        public bool Keep(float3 position)
+        public float Probability(float2 point, float2 patternPoint, bool detailed = true)
         {
-            // One random test for the combined probability, rather than intersecting
-            // two coordinate-based random masks at low density.
+            float inward = InwardDistance(point);
+            if (inward <= 0f) return 0f;
+            return detailed ? SamplePattern(patternPoint).Probability(inward) : 1f;
+        }
+
+        public bool Keep(float3 position, float3 shapeCenter)
+        {
+
             float density = math.saturate(ForestBrushState.DensityPercent / 100f);
-            float chance = Probability(position.xz) * density;
+            float chance = Probability(position.xz,
+                ForestBrushState.PatternPosition(position, shapeCenter)) * density;
             return ForestBrushState.PlacementRandom(position, (uint)ForestBrushState.PathSeed) < chance;
         }
     }

@@ -18,6 +18,8 @@ const speciesPaletteActive$ = bindValue<boolean>(mod.id, "SpeciesPaletteActive")
 const paletteWindowLayout$ = bindValue<string>(mod.id, "PaletteWindowLayout");
 const currentSpecies$ = bindValue<string>(mod.id, "CurrentSpecies");
 const pathForest$ = bindValue<boolean>(mod.id, "PathForest");
+const forestPreview$ = bindValue<number>(mod.id, "ForestPreview");
+const roadPreview$ = bindValue<number>(mod.id, "RoadPreview");
 const pathCount$ = bindValue<number>(mod.id, "PathCount");
 const pathGap$ = bindValue<number>(mod.id, "PathGap");
 const pathWidth$ = bindValue<number>(mod.id, "PathWidth");
@@ -247,6 +249,33 @@ export const AdvancedForestBrushPanel = () => {
         if (Array.isArray(parsed)) speciesPalette = parsed.filter((item): item is string => typeof item === "string");
     } catch { /* The backend will send a fresh palette on its next update. */ }
     const pathForest = useValue(pathForest$);
+    const forestPreview = useValue(forestPreview$);
+    const roadPreview = useValue(roadPreview$);
+    const [previewOptionsOpen, setPreviewOptionsOpen] = useState(false);
+    const previewOptionsRef = useRef<HTMLDivElement | null>(null);
+    const previewMenuRef = useRef<HTMLDivElement | null>(null);
+    const [previewMenuPosition, setPreviewMenuPosition] = useState({ left: 0, top: 0 });
+    useEffect(() => setPreviewOptionsOpen(false), [visible, panelVisible, pathForest]);
+    useEffect(() => {
+        if (!previewOptionsOpen) return;
+        const closeOutside = (event: MouseEvent) => {
+            if (event.target instanceof Node && !previewOptionsRef.current?.contains(event.target) &&
+                !previewMenuRef.current?.contains(event.target))
+                setPreviewOptionsOpen(false);
+        };
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                event.stopPropagation();
+                setPreviewOptionsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", closeOutside, true);
+        document.addEventListener("keydown", closeOnEscape, true);
+        return () => {
+            document.removeEventListener("mousedown", closeOutside, true);
+            document.removeEventListener("keydown", closeOnEscape, true);
+        };
+    }, [previewOptionsOpen]);
     const pathCount = useValue(pathCount$);
     const pathGap = useValue(pathGap$);
     const pathWidth = useValue(pathWidth$);
@@ -278,6 +307,17 @@ export const AdvancedForestBrushPanel = () => {
         translate("Toolbar.TOOL_MODE_TITLE", "Tool Mode") ?? "Tool Mode";
 
     const t = {
+        preview: loc("Preview", "Preview"),
+        previewOptions: loc("PreviewOptions", "Preview options"),
+        forestPreview: loc("ForestPreview", "Normal planting"),
+        roadPreview: loc("RoadPreview", "Road mode"),
+        previewLegacy: loc("PreviewLegacy", "Legacy"),
+        previewNormal: loc("PreviewNormal", "Normal"),
+        previewDetail: loc("PreviewDetail", "Detail"),
+        previewDetailBeta: loc("PreviewDetailBeta", "Detail (Beta)"),
+        previewLegacyTip: loc("PreviewLegacyTip", "Brush outline without density patterns or road cutouts. Lowest preview cost."),
+        previewNormalTip: loc("PreviewNormalTip", "Road-aware area without noise or clearings. Recalculated when moving."),
+        previewDetailTip: loc("PreviewDetailTip", "Cached density patterns and clearings. Road mode also updates the road mask and may reduce FPS."),
         pathForest: loc("PathForest", "Forest along paths"),
         pathForestHint: loc("PathForestHint", "Paint around existing ground-level roads and paths with the selected shape. Enable the detailed forest preview in Options if desired. Right-click erases vegetation."),
         pathGap: loc("PathGap", "Free verge"),
@@ -294,7 +334,7 @@ export const AdvancedForestBrushPanel = () => {
         pathTransitionTip: loc("PathTransitionTip", "Gradual density increase at the verge and decrease at the outer forest edge."),
         pathClearingsTip: loc("PathClearingsTip", "Strength of the clearing pattern; not an exact percentage of empty land. 0 disables clearings."),
         pathClearingSizeTip: loc("PathClearingSizeTip", "Approximate scale of connected clearings in metres."),
-        pathSeedTip: loc("PathSeedTip", "Keeps the forest pattern fixed in world space. Changing the seed affects new placements only."),
+        pathSeedTip: loc("PathSeedTip", "Keeps the density and clearing pattern fixed relative to the brush. Changing the seed affects new placements only."),
         title: loc("Title", "Advanced Forest Brush"),
         open: loc("Open", "Open Advanced Forest Brush"),
         close: loc("Close", "Close Advanced Forest Brush"),
@@ -367,6 +407,22 @@ export const AdvancedForestBrushPanel = () => {
     const [target, setTarget] = useState<HTMLElement | null>(null);
     const [dockPosition, setDockPosition] = useState({ left: 80, bottom: 70 });
     const panelRef = useRef<HTMLDivElement | null>(null);
+    // Keep the popup outside the main panel's backdrop-filter root.
+    useEffect(() => {
+        if (!panelVisible || !previewOptionsOpen) return;
+        const updatePosition = () => {
+            const rect = panelRef.current?.getBoundingClientRect();
+            if (rect) setPreviewMenuPosition({ left: rect.right + rect.width * 8 / 350, top: rect.top });
+        };
+        updatePosition();
+        const observer = new MutationObserver(updatePosition);
+        if (panelRef.current) observer.observe(panelRef.current, { attributes: true, childList: true, subtree: true });
+        window.addEventListener("resize", updatePosition);
+        return () => {
+            observer.disconnect();
+            window.removeEventListener("resize", updatePosition);
+        };
+    }, [panelVisible, previewOptionsOpen, dockPosition.left, dockPosition.bottom]);
     const paletteRef = useRef<HTMLDivElement | null>(null);
     const paletteDragOffset = useRef<{ x: number; y: number } | null>(null);
     const paletteResizeStart = useRef<{ y: number; height: number; top: number } | null>(null);
@@ -438,7 +494,8 @@ export const AdvancedForestBrushPanel = () => {
         const onPlantClick = (event: MouseEvent) => {
             if (event.button !== 0 || !(event.target instanceof Element) ||
                 panelRef.current?.contains(event.target) ||
-                paletteRef.current?.contains(event.target)) return;
+                paletteRef.current?.contains(event.target) ||
+                previewMenuRef.current?.contains(event.target)) return;
             let candidate: HTMLElement | null = event.target instanceof HTMLElement
                 ? event.target : event.target.parentElement;
             for (let depth = 0; candidate && depth < 5; depth++, candidate = candidate.parentElement) {
@@ -601,6 +658,22 @@ export const AdvancedForestBrushPanel = () => {
     const Tooltip = resolver.Tooltip;
     const tooltipTheme = resolver.descriptionTooltipTheme;
     const panelTheme = resolver.toolOptionsPanelTheme?.toolOptionsPanel;
+    const previewOptionsButton = (
+        <button type="button"
+            className={classNames(styles.previewOptionsButton, previewOptionsOpen && styles.selected)}
+            aria-label={t.previewOptions} aria-expanded={previewOptionsOpen}
+            aria-controls="advanced-forest-brush-preview-options"
+            title={Tooltip ? undefined : t.previewOptions}
+            onClick={() => setPreviewOptionsOpen(open => !open)}>
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+                <path d="M6 8h20M6 16h20M6 24h20" />
+                <circle cx="12" cy="8" r="3" /><circle cx="21" cy="16" r="3" /><circle cx="12" cy="24" r="3" />
+            </svg>
+        </button>
+    );
+    const previewChoices: Array<[number, string, string]> = pathForest
+        ? [[0, t.previewLegacy, t.previewLegacyTip], [1, t.previewNormal, t.previewNormalTip], [2, t.previewDetailBeta, t.previewDetailTip]]
+        : [[0, t.previewLegacy, t.previewLegacyTip], [1, t.previewDetail, t.previewDetailTip]];
     const launcherButton = (
         <button
             className={classNames(styles.toolModeButton, panelVisible && styles.launcherSelected)}
@@ -737,6 +810,12 @@ export const AdvancedForestBrushPanel = () => {
                     onMouseLeave={() => fire("SetPointerOverUI", false)}
                 >
                     <div className={styles.header}>
+                        <div className={styles.previewOptionsAnchor} ref={previewOptionsRef}>
+                            {Tooltip
+                                ? <Tooltip tooltip={<div className={tooltipTheme?.title}>{t.previewOptions}</div>}>{previewOptionsButton}</Tooltip>
+                                : previewOptionsButton}
+
+                        </div>
                         {backControl}
                         {anarchyControl}
                     </div>
@@ -895,6 +974,28 @@ export const AdvancedForestBrushPanel = () => {
                                 })}
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {panelVisible && previewOptionsOpen && (
+                <div ref={previewMenuRef} id="advanced-forest-brush-preview-options"
+                    style={{ left: `${previewMenuPosition.left}px`, top: `${previewMenuPosition.top}px` }}
+                    onMouseEnter={() => fire("SetPointerOverUI", true)}
+                    onMouseLeave={() => fire("SetPointerOverUI", false)}
+                    className={classNames(panelTheme, styles.previewOptionsMenu)}>
+                    <strong>{`${t.preview} – ${pathForest ? t.roadPreview : t.forestPreview}`}</strong>
+                    <div className={styles.previewChoices} role="group" aria-label={t.preview}>
+                        {previewChoices.map(([value, label, tip]) => {
+                            const selected = (pathForest ? roadPreview : forestPreview) === value;
+                            const button = <button type="button"
+                                className={classNames(styles.previewChoice, selected && styles.selected)}
+                                aria-pressed={selected} title={Tooltip ? undefined : tip}
+                                onClick={() => fire(pathForest ? "SetRoadPreview" : "SetForestPreview", value)}>{label}</button>;
+                            return <div key={value} className={styles.previewChoiceSlot}>
+                                {Tooltip ? <Tooltip tooltip={<><div className={tooltipTheme?.title}>{label}</div><div className={tooltipTheme?.content}>{tip}</div></>}>{button}</Tooltip> : button}
+                            </div>;
+                        })}
                     </div>
                 </div>
             )}

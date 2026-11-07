@@ -48,9 +48,9 @@ Advanced Forest Brush uses the Tree Controller age selection
 - Plant Frequency species list option for controlling the frequency of each plant in the list
 - Support for the game and editor
 - English, German, Spanish, Italian, French localization
-		
-- Detailed forest preview (Beta)
-	optional detailed preview in the mod options to visualize forest patterns before planting, including noise variations and clearings.
+
+- Detailed forest preview (Beta), optional detailed preview in the mod options to visualize forest patterns before planting, including noise variations and clearings.
+- Legacy option to disable new Preview for better Performance on low-end systems
 
 
 **How to use**
@@ -61,11 +61,11 @@ For polygons, left-click to add points and click the first point or double-click
 Hold ctrl + right mouse button and move horizontally to rotate the completed polygon.
 Press Esc or use Reset polygon to start again.
 
-To mix plants from different pages of the vegetation bar, click **Use species list** in the brush panel.
-Ctrl + left-click a plant in the vegetation bar to add it; alternatively, select it and click **Add current plant**.
+To mix plants from different pages of the vegetation bar, click **Use Vegetation list** in the brush panel.
+**Ctrl + left-click** a plant in the vegetation bar to add it; alternatively, select it and click **Add current plant**.
 Scroll the bar and repeat for as many plants as you need.
 The brush uses the plants in the list even when they are no longer visible in the bar.
-Remove individual plants with **×**, or click **Clear list**. An empty list uses the game's current selection.
+Remove individual plants with **X**, or click **Clear list**. An empty list uses the game's current selection.
 Click **Use game selection** or close the list window to return to normal selection.
 Change the add-to-list combination under **Options → Advanced Forest Brush → Key bindings**.
 
