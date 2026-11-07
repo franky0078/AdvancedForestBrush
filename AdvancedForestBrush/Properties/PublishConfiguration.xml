@@ -118,7 +118,7 @@
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="1.1.4" />
+	<ModVersion Value="1.1.5" />
 	<GameVersion Value="1.6.*" />
 
 	
@@ -128,7 +128,7 @@
 	<ChangeLog>
 		Latest changes
 
-		- fix tree age selection not working correctly with Tree Controller
+		- fixed an issue with the vegetation list shortcut. The clicked plant is now added on the first click, even when a different plant is selected.
 	</ChangeLog>
 
 	<!--Optional external links for your own mod.-->

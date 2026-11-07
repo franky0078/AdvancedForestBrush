@@ -494,6 +494,21 @@ export const AdvancedForestBrushPanel = () => {
                 panelRef.current?.contains(event.target) ||
                 paletteRef.current?.contains(event.target) ||
                 previewMenuRef.current?.contains(event.target)) return;
+
+            const catalogEntry = event.target.closest("[data-catalog-entry]");
+            if (catalogEntry) {
+                // Frankys Asset Menu puts the id on the tile, or on the row
+                // whose first child is the selection control in table view.
+                const control = catalogEntry.hasAttribute("aria-label") ? catalogEntry : catalogEntry.firstElementChild;
+                const id = Number(catalogEntry.getAttribute("data-catalog-entry"));
+                if (control?.contains(event.target) &&
+                    !control.matches("[disabled],[aria-disabled='true'],[data-refused='true']") &&
+                    Number.isSafeInteger(id) && id > 0) {
+                    fire("TryAddCatalogSpeciesShortcut", id);
+                }
+                return;
+            }
+
             let candidate: HTMLElement | null = event.target instanceof HTMLElement
                 ? event.target : event.target.parentElement;
             for (let depth = 0; candidate && depth < 5; depth++, candidate = candidate.parentElement) {

@@ -3,6 +3,7 @@ using Game;
 using Game.Prefabs;
 using Game.Tools;
 using Game.UI;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using AgeMask = Game.Tools.AgeMask;
@@ -21,6 +22,7 @@ namespace AdvancedForestBrush
         private float m_PreviousBrushStrength;
         private bool m_OwnsObjectToolState;
         private int m_ShortcutAddFrames;
+        private EntityQuery m_PlantPrefabs;
         private readonly System.Random m_PathSeedRandom = new System.Random();
 
         public override GameMode gameMode => GameMode.GameOrEditor;
@@ -31,6 +33,7 @@ namespace AdvancedForestBrush
             m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
             m_ObjectToolSystem = World.GetOrCreateSystemManaged<ObjectToolSystem>();
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
+            m_PlantPrefabs = GetEntityQuery(ComponentType.ReadOnly<PlantData>());
             ForestSpeciesPalette.Clear();
             ForestSpeciesPalette.Active = false;
 
@@ -167,6 +170,7 @@ namespace AdvancedForestBrush
             AddBinding(new TriggerBinding(Mod.Id, "TogglePanel", TogglePanel));
             AddBinding(new TriggerBinding(Mod.Id, "AddCurrentSpecies", AddCurrentSpecies));
             AddBinding(new TriggerBinding(Mod.Id, "TryAddSpeciesShortcut", TryAddSpeciesShortcut));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "TryAddCatalogSpeciesShortcut", TryAddCatalogSpeciesShortcut));
             AddBinding(new TriggerBinding(Mod.Id, "ToggleSpeciesPalette", () => ForestSpeciesPalette.Active = !ForestSpeciesPalette.Active));
             AddBinding(new TriggerBinding<string>(Mod.Id, "SavePaletteWindowLayout", SavePaletteWindowLayout));
             AddBinding(new TriggerBinding<int>(Mod.Id, "RemoveSpecies", ForestSpeciesPalette.Remove));
@@ -275,18 +279,37 @@ namespace AdvancedForestBrush
             if (IsVegetationContext() &&
                 m_PrefabSystem.TryGetEntity(m_ToolSystem.activePrefab, out Entity entity))
             {
-                // Resolve the game's asset thumbnail once when adding the entry.
-                var prefab = m_ToolSystem.activePrefab;
-                string icon = ImageSystem.GetThumbnail(prefab);
-                if (string.IsNullOrEmpty(icon)) icon = ImageSystem.GetIcon(prefab);
-                ForestSpeciesPalette.Add(entity, prefab.name, icon);
+                AddSpecies(entity, m_ToolSystem.activePrefab);
+            }
+        }
+
+        private static void AddSpecies(Entity entity, PrefabBase prefab)
+        {
+            string icon = ImageSystem.GetThumbnail(prefab);
+            if (string.IsNullOrEmpty(icon)) icon = ImageSystem.GetIcon(prefab);
+            ForestSpeciesPalette.Add(entity, prefab.name, icon);
+        }
+
+        private bool CanAddSpeciesWithShortcut() =>
+            ForestBrushState.PanelVisible && ForestSpeciesPalette.Active && ForestBrushInput.IsAddingSpecies;
+
+        private void TryAddCatalogSpeciesShortcut(int prefabIndex)
+        {
+            if (prefabIndex <= 0 || !CanAddSpeciesWithShortcut()) return;
+
+            using var plants = m_PlantPrefabs.ToEntityArray(Allocator.Temp);
+            foreach (var plant in plants)
+            {
+                if (plant.Index != prefabIndex) continue;
+                if (m_PrefabSystem.TryGetPrefab<PrefabBase>(plant, out var prefab))
+                    AddSpecies(plant, prefab);
+                return;
             }
         }
 
         private void TryAddSpeciesShortcut()
         {
-            if (ForestBrushState.PanelVisible && ForestSpeciesPalette.Active &&
-                ForestBrushInput.IsAddingSpecies)
+            if (CanAddSpeciesWithShortcut())
             {
                 // Allow the game's asset selection to finish before reading activePrefab.
                 m_ShortcutAddFrames = 2;
