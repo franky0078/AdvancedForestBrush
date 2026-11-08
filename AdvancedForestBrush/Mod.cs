@@ -1,3 +1,4 @@
+using System;
 using Colossal.Logging;
 using Colossal.IO.AssetDatabase;
 using AdvancedForestBrush.Localization;
@@ -15,6 +16,14 @@ namespace AdvancedForestBrush
             typeof(Mod).Assembly.GetName().Version.ToString(3);
         internal static ILog Log { get; private set; }
         public static Setting Settings { get; private set; }
+        private static Func<bool> s_SingleTreeAddonEnabled;
+
+        internal static bool SingleTreeAddonEnabled => s_SingleTreeAddonEnabled?.Invoke() == true;
+
+        public static void RegisterSingleTreeAddon(Func<bool> isEnabled)
+        {
+            s_SingleTreeAddonEnabled = isEnabled;
+        }
 
         public static bool DiagnosticLoggingEnabled =>
             Settings?.EnableDiagnosticLogging ?? false;
@@ -67,17 +76,20 @@ namespace AdvancedForestBrush
             updateSystem.UpdateAt<ForestBrushOverlaySystem>(SystemUpdatePhase.ToolUpdate);
             updateSystem.UpdateAt<AdvancedForestBrushUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<ForestBrushTooltipSystem>(SystemUpdatePhase.UITooltip);
-            updateSystem.UpdateBefore<ForestPlacementFilterSystem>(SystemUpdatePhase.Modification1);
+            updateSystem.UpdateBefore<ForestPlacementFilterSystem, ForestSpeciesPlacementSystem>(
+                SystemUpdatePhase.Modification1);
             updateSystem.UpdateBefore<ForestSpeciesPlacementSystem, GenerateObjectsSystem>(
                 SystemUpdatePhase.Modification1);
             updateSystem.UpdateBefore<ForestTreePreserveAgeSystem, ApplyObjectsSystem>(
                 SystemUpdatePhase.ApplyTool);
+            updateSystem.UpdateBefore<ForestSinglePlantRotationSystem>(SystemUpdatePhase.PostTool);
         }
 
         public void OnDispose()
         {
             Log?.Info("Advanced Forest Brush disposed");
             ForestBrushInput.Deactivate();
+            s_SingleTreeAddonEnabled = null;
 
             if (Settings != null)
             {

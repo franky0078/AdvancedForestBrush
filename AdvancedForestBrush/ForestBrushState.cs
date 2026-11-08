@@ -31,6 +31,7 @@ namespace AdvancedForestBrush
     public static class ForestBrushState
     {
         public static bool PanelVisible;
+        internal static bool SingleTreeMode;
         public static bool PointerOverUI;
         public static int DensityPercent = 100;
         public static ForestNoiseMode NoiseMode = ForestNoiseMode.Uniform;

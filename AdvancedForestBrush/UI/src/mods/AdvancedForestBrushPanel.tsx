@@ -11,6 +11,8 @@ import { VanillaComponentResolver } from "./VanillaComponentResolver";
 
 const visible$ = bindValue<boolean>(mod.id, "IsVisible");
 const panelVisible$ = bindValue<boolean>(mod.id, "PanelVisible");
+const singleTreeAvailable$ = bindValue<boolean>(mod.id, "SingleTreeAvailable", false);
+const singleTreeMode$ = bindValue<boolean>(mod.id, "SingleTreeMode", false);
 const speciesPalette$ = bindValue<string>(mod.id, "SpeciesPalette");
 const speciesIcons$ = bindValue<string>(mod.id, "SpeciesIcons");
 const speciesWeights$ = bindValue<string>(mod.id, "SpeciesWeights");
@@ -28,6 +30,9 @@ const pathClearings$ = bindValue<number>(mod.id, "PathClearings");
 const pathClearingSize$ = bindValue<number>(mod.id, "PathClearingSize");
 const pathSeed$ = bindValue<number>(mod.id, "PathSeed");
 const randomVegetationRotation$ = bindValue<boolean>(mod.id, "RandomVegetationRotation");
+const randomRotationMin$ = bindValue<number>(mod.id, "RandomRotationMin", 0);
+const randomRotationMax$ = bindValue<number>(mod.id, "RandomRotationMax", 360);
+const randomRotationChance$ = bindValue<number>(mod.id, "RandomRotationChance", 100);
 const density$ = bindValue<number>(mod.id, "Density");
 const noiseMode$ = bindValue<number>(mod.id, "NoiseMode");
 const noiseScale$ = bindValue<number>(mod.id, "NoiseScale");
@@ -58,6 +63,7 @@ const fire = (name: string, ...args: any[]) => trigger(mod.id, name, ...args);
 
 type GlyphName =
     | "forest"
+    | "singleTree"
     | "circle"
     | "square"
     | "rectangle"
@@ -77,6 +83,7 @@ type GlyphName =
 const Glyph = ({ name }: { name: GlyphName }) => {
     const paths: Record<GlyphName, JSX.Element> = {
         forest: <><circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="3 3" /><path d="M16 6 11 14h3l-4 6h5v6h2v-6h5l-4-6h3L16 6Z" /></>,
+        singleTree: <path d="M16 4 8 14h4L6 22h8v6h4v-6h8l-6-8h4L16 4Z" />,
         circle: <circle cx="16" cy="16" r="10.5" fill="none" stroke="currentColor" strokeWidth="3" />,
         square: <rect x="6" y="6" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" />,
         rectangle: <rect x="3.5" y="8" width="25" height="16" fill="none" stroke="currentColor" strokeWidth="3" />,
@@ -246,14 +253,16 @@ export const AdvancedForestBrushPanel = () => {
         const parsed = JSON.parse(speciesPaletteJson || "[]");
         if (Array.isArray(parsed)) speciesPalette = parsed.filter((item): item is string => typeof item === "string");
     } catch { /* The backend will send a fresh palette on its next update. */ }
-    const pathForest = useValue(pathForest$);
+    const singleTreeAvailable = useValue(singleTreeAvailable$);
+    const singleTree = useValue(singleTreeMode$);
+    const pathForest = useValue(pathForest$) && !singleTree;
     const forestPreview = useValue(forestPreview$);
     const roadPreview = useValue(roadPreview$);
     const [previewOptionsOpen, setPreviewOptionsOpen] = useState(false);
     const previewOptionsRef = useRef<HTMLDivElement | null>(null);
     const previewMenuRef = useRef<HTMLDivElement | null>(null);
     const [previewMenuPosition, setPreviewMenuPosition] = useState({ left: 0, top: 0 });
-    useEffect(() => setPreviewOptionsOpen(false), [visible, panelVisible, pathForest]);
+    useEffect(() => setPreviewOptionsOpen(false), [visible, panelVisible, pathForest, singleTree]);
     useEffect(() => {
         if (!previewOptionsOpen) return;
         const closeOutside = (event: MouseEvent) => {
@@ -291,6 +300,9 @@ export const AdvancedForestBrushPanel = () => {
     const [loadedAnarchyIcon, setLoadedAnarchyIcon] = useState<string | null>(null);
     const [failedAnarchyIcon, setFailedAnarchyIcon] = useState<string | null>(null);
     const randomVegetationRotation = useValue(randomVegetationRotation$);
+    const randomRotationMin = useValue(randomRotationMin$);
+    const randomRotationMax = useValue(randomRotationMax$);
+    const randomRotationChance = useValue(randomRotationChance$);
     const preserveAge = useValue(toolbar.decorationMode$);
     const shape = useValue(shape$);
     const shapeWidth = useValue(shapeWidth$);
@@ -306,7 +318,7 @@ export const AdvancedForestBrushPanel = () => {
 
     const t = {
         preview: loc("Preview", "Preview"),
-        previewOptions: loc("PreviewOptions", "Preview options"),
+        previewOptions: loc("PreviewOptions", "Preview and rotation options"),
         forestPreview: loc("ForestPreview", "Normal planting"),
         roadPreview: loc("RoadPreview", "Road mode"),
         previewLegacy: loc("PreviewLegacy", "Legacy"),
@@ -340,6 +352,8 @@ export const AdvancedForestBrushPanel = () => {
         anarchy: loc("Anarchy", "Anarchy"),
         anarchyTip: loc("AnarchyTooltip", "Toggles the Anarchy mod for brush placement. Requires Anarchy to be installed."),
         shape: loc("Shape", "Shape"),
+        singleTree: loc("SingleTree", "Single plant"),
+        singleTreeTip: loc("SingleTreeTooltip", "Place one tree or bush per click. Right-click to rotate by 45°, or hold the right mouse button and drag horizontally for fine rotation."),
         circle: loc("Circle", "Circle"),
         circleTip: loc("CircleTooltip", "Normal round brush."),
         square: loc("Square", "Square"),
@@ -366,7 +380,11 @@ export const AdvancedForestBrushPanel = () => {
         speciesHint: loc("SpeciesHint", "Ctrl + left-click a plant in the vegetation bar to add it, or select it and use Add current plant. The shortcut can be changed in Options. An empty list uses the game's selection."),
         resizeSpecies: loc("ResizeSpeciesPalette", "Resize Vegetation List"),
         randomRotation: loc("RandomVegetationRotation", "Random rotation"),
-        randomRotationTip: loc("RandomVegetationRotationTooltip", "Randomly rotates newly placed vegetation around its vertical axis in all brush shapes and both forest modes."),
+        randomRotationTip: loc("RandomVegetationRotationTooltip", "Rotates newly placed vegetation within the selected angle range."),
+        randomRotationMin: loc("RandomRotationMin", "Minimum angle"),
+        randomRotationMax: loc("RandomRotationMax", "Maximum angle"),
+        randomRotationChance: loc("RandomRotationChance", "Rotation chance"),
+        randomRotationChanceTip: loc("RandomRotationChanceTooltip", "At 0%, random rotation is off. At 100%, every new plant gets a random angle."),
         speciesGrouping: loc("SpeciesGrouping", "Vegetation grouping"),
         speciesGroupingTip: loc("SpeciesGroupingTooltip", "Groups the selected vegetation into patches. Stronger grouping leaves fewer trees; adjust density if needed."),
         groupingLevels: [loc("GroupingOff", "Off"), loc("GroupingWeak", "Weak"), loc("GroupingMedium", "Medium"), loc("GroupingStrong", "Strong")],
@@ -410,7 +428,15 @@ export const AdvancedForestBrushPanel = () => {
         if (!panelVisible || !previewOptionsOpen) return;
         const updatePosition = () => {
             const rect = panelRef.current?.getBoundingClientRect();
-            if (rect) setPreviewMenuPosition({ left: rect.right + rect.width * 8 / 350, top: rect.top });
+            const menu = previewMenuRef.current;
+            if (!rect || !menu) return;
+            const gap = rect.width * 8 / 350;
+            const left = rect.right + gap + menu.offsetWidth <= window.innerWidth
+                ? rect.right + gap : rect.left - gap - menu.offsetWidth;
+            setPreviewMenuPosition({
+                left: Math.max(0, left),
+                top: Math.max(0, Math.min(rect.top, window.innerHeight - menu.offsetHeight - gap))
+            });
         };
         updatePosition();
         const observer = new MutationObserver(updatePosition);
@@ -814,61 +840,66 @@ export const AdvancedForestBrushPanel = () => {
                     </div>
 
                     <div className={styles.content}>
-                        <button type="button"
-                            className={classNames(styles.paletteToggle, pathForest && styles.selected)}
-                            aria-pressed={pathForest}
-                            onClick={() => fire("TogglePathForest")}>{t.pathForest}</button>
-                        <div className={styles.divider} />
+                        {!singleTree && <>
+                            <button type="button"
+                                className={classNames(styles.paletteToggle, pathForest && styles.selected)}
+                                aria-pressed={pathForest}
+                                onClick={() => fire("TogglePathForest")}>{t.pathForest}</button>
+                            <div className={styles.divider} />
+                        </>}
                         <div className={styles.distributionRow}>
                             <div className={styles.settingLabel}>{t.shape}</div>
                             <div className={styles.iconRow}>
-                                {tooltipButton("circle", shape === 0, t.circle, t.circleTip, () => fire("SetShape", 0))}
-                                {tooltipButton("square", shape === 1, t.square, t.squareTip, () => fire("SetShape", 1))}
-                                {tooltipButton("rectangle", shape === 2, t.rectangle, t.rectangleTip, () => fire("SetShape", 2))}
-                                {tooltipButton("polygon", shape === 3, t.polygon, t.polygonTip, () => fire("SetShape", 3))}
+                                {singleTreeAvailable && tooltipButton("singleTree", singleTree, t.singleTree, t.singleTreeTip, () => fire("SelectSingleTree"))}
+                                {tooltipButton("circle", !singleTree && shape === 0, t.circle, t.circleTip, () => fire("SetShape", 0))}
+                                {tooltipButton("square", !singleTree && shape === 1, t.square, t.squareTip, () => fire("SetShape", 1))}
+                                {tooltipButton("rectangle", !singleTree && shape === 2, t.rectangle, t.rectangleTip, () => fire("SetShape", 2))}
+                                {tooltipButton("polygon", !singleTree && shape === 3, t.polygon, t.polygonTip, () => fire("SetShape", 3))}
                             </div>
                         </div>
 
-                        {shape === 0 && (
-                            <NumberControl
-                                label={t.brushSize}
-                                value={circleBrushSize}
-                                min={10}
-                                max={1000}
-                                step={10}
-                                unit="m"
-                                downTooltip={t.minus}
-                                upTooltip={t.plus}
-                                onChange={value => fire("SetCircleBrushSize", value)}
-                            />
-                        )}
-
-                        {shape === 1 && (
-                            <NumberControl label={t.size} value={shapeWidth} min={10} max={1000} step={10} unit="m" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetShapeWidth", value)} />
-                        )}
-
-                        {shape === 2 && (
-                            <>
-                                <NumberControl label={t.width} value={shapeWidth} min={10} max={1000} step={10} unit="m" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetShapeWidth", value)} />
-                                <NumberControl label={t.length} value={shapeLength} min={10} max={1000} step={10} unit="m" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetShapeLength", value)} />
-                            </>
-                        )}
-
-                        {(shape === 1 || shape === 2 ||
-                            (shape === 3 && polygonClosed)) && (
-                                <NumberControl label={t.rotation} value={Math.round(rotation)} min={0} max={359} step={5} unit="°" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetRotation", value)} />
+                        {!singleTree && <>
+                            {shape === 0 && (
+                                <NumberControl
+                                    label={t.brushSize}
+                                    value={circleBrushSize}
+                                    min={10}
+                                    max={1000}
+                                    step={10}
+                                    unit="m"
+                                    downTooltip={t.minus}
+                                    upTooltip={t.plus}
+                                    onChange={value => fire("SetCircleBrushSize", value)}
+                                />
                             )}
 
-                        {shape === 3 && (
-                            <div className={styles.polygonStatus}>
-                                <span className={polygonClosed ? styles.ready : undefined}>
-                                    {polygonClosed ? t.polygonReady : t.polygonDrawing} · {polygonPointCount} {t.polygonPoints}
-                                </span>
-                                <button onClick={() => fire("ResetPolygon")}>{t.polygonReset}</button>
-                            </div>
-                        )}
+                            {shape === 1 && (
+                                <NumberControl label={t.size} value={shapeWidth} min={10} max={1000} step={10} unit="m" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetShapeWidth", value)} />
+                            )}
 
-                        <NumberControl label={t.density} value={density} min={10} max={300} step={density < 100 ? 5 : 10} unit="%" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetDensity", value)} />
+                            {shape === 2 && (
+                                <>
+                                    <NumberControl label={t.width} value={shapeWidth} min={10} max={1000} step={10} unit="m" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetShapeWidth", value)} />
+                                    <NumberControl label={t.length} value={shapeLength} min={10} max={1000} step={10} unit="m" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetShapeLength", value)} />
+                                </>
+                            )}
+
+                            {(shape === 1 || shape === 2 ||
+                                (shape === 3 && polygonClosed)) && (
+                                    <NumberControl label={t.rotation} value={Math.round(rotation)} min={0} max={359} step={5} unit="°" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetRotation", value)} />
+                                )}
+
+                            {shape === 3 && (
+                                <div className={styles.polygonStatus}>
+                                    <span className={polygonClosed ? styles.ready : undefined}>
+                                        {polygonClosed ? t.polygonReady : t.polygonDrawing} · {polygonPointCount} {t.polygonPoints}
+                                    </span>
+                                    <button onClick={() => fire("ResetPolygon")}>{t.polygonReset}</button>
+                                </div>
+                            )}
+
+                            <NumberControl label={t.density} value={density} min={10} max={300} step={density < 100 ? 5 : 10} unit="%" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetDensity", value)} />
+                        </>}
 
                         <div className={styles.divider} />
                         <div className={styles.distributionRow}>
@@ -893,80 +924,81 @@ export const AdvancedForestBrushPanel = () => {
 
                         <div className={styles.divider} />
                         <div className={styles.vegetationActions}>
-                        <button
-                            type="button"
-                            className={classNames(styles.paletteToggle, speciesPaletteActive && styles.selected)}
-                            aria-pressed={speciesPaletteActive}
-                            onClick={togglePalette}
-                        >{speciesPaletteActive ? t.closeSpecies : t.openSpecies}</button>
-                        <button type="button"
-                            className={classNames(styles.paletteToggle, randomVegetationRotation && styles.selected)}
-                            aria-pressed={randomVegetationRotation}
-                            title={t.randomRotationTip}
-                            onClick={() => fire("ToggleRandomVegetationRotation")}
-                        >{t.randomRotation}</button>
+                            {!singleTree && <button type="button"
+                                className={classNames(styles.paletteToggle, speciesPaletteActive && styles.selected)}
+                                aria-pressed={speciesPaletteActive}
+                                onClick={togglePalette}
+                            >{speciesPaletteActive ? t.closeSpecies : t.openSpecies}</button>}
+                            <button type="button"
+                                className={classNames(styles.paletteToggle, randomVegetationRotation && styles.selected)}
+                                aria-pressed={randomVegetationRotation}
+                                title={t.randomRotationTip}
+                                onClick={() => fire("ToggleRandomVegetationRotation")}
+                            >{t.randomRotation}</button>
                         </div>
 
-                        {pathForest && <div className={styles.noiseSettings}>
-                            <div className={styles.hint}>{t.pathForestHint}</div>
-                            <div className={styles.hint} role="status">{pathCount > 0
-                                ? `${t.pathDetected}: ${pathCount}` : t.pathNone}</div>
-                            <div className={styles.pathControlsGrid}>
-                                <div className={styles.pathControlsPair}>
-                                    <div className={styles.pathControlCell}><NumberControl label={t.pathGap} value={pathGap} min={0} max={50} step={1} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathGapTip} onChange={value => fire("SetPathGap", value)} /></div>
-                                    <div className={styles.pathControlCell}><NumberControl label={t.pathWidth} value={pathWidth} min={10} max={300} step={10} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathWidthTip} onChange={value => fire("SetPathWidth", value)} /></div>
+                        {!singleTree && <>
+                            {pathForest && <div className={styles.noiseSettings}>
+                                <div className={styles.hint}>{t.pathForestHint}</div>
+                                <div className={styles.hint} role="status">{pathCount > 0
+                                    ? `${t.pathDetected}: ${pathCount}` : t.pathNone}</div>
+                                <div className={styles.pathControlsGrid}>
+                                    <div className={styles.pathControlsPair}>
+                                        <div className={styles.pathControlCell}><NumberControl label={t.pathGap} value={pathGap} min={0} max={50} step={1} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathGapTip} onChange={value => fire("SetPathGap", value)} /></div>
+                                        <div className={styles.pathControlCell}><NumberControl label={t.pathWidth} value={pathWidth} min={10} max={300} step={10} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathWidthTip} onChange={value => fire("SetPathWidth", value)} /></div>
+                                    </div>
+                                    <div className={styles.pathControlsPair}>
+                                        <div className={styles.pathControlCell}><NumberControl label={t.pathTransition} value={pathTransition} min={1} max={100} step={1} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathTransitionTip} onChange={value => fire("SetPathTransition", value)} /></div>
+                                        <div className={styles.pathControlCell}><NumberControl label={t.pathClearings} value={pathClearings} min={0} max={80} step={5} unit="%" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathClearingsTip} onChange={value => fire("SetPathClearings", value)} /></div>
+                                    </div>
+                                    <div className={styles.pathControlsPair}>
+                                        <div className={styles.pathControlCell}><NumberControl label={t.pathClearingSize} value={pathClearingSize} min={10} max={200} step={5} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathClearingSizeTip} onChange={value => fire("SetPathClearingSize", value)} /></div>
+                                        <div className={classNames(styles.pathControlCell, styles.seedControlCell)}><NumberControl label={t.pathSeed} value={pathSeed} min={1} max={999999} step={1} unit="" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathSeedTip} onChange={value => fire("SetPathSeed", value)} /></div>
+                                    </div>
                                 </div>
-                                <div className={styles.pathControlsPair}>
-                                    <div className={styles.pathControlCell}><NumberControl label={t.pathTransition} value={pathTransition} min={1} max={100} step={1} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathTransitionTip} onChange={value => fire("SetPathTransition", value)} /></div>
-                                    <div className={styles.pathControlCell}><NumberControl label={t.pathClearings} value={pathClearings} min={0} max={80} step={5} unit="%" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathClearingsTip} onChange={value => fire("SetPathClearings", value)} /></div>
+                                <button type="button" className={styles.paletteToggle}
+                                    onClick={() => fire("RerollPathForest")}>{t.pathReroll}</button>
+                            </div>}
+                            {!pathForest && <div className={styles.distributionRow}>
+                                <div className={styles.settingLabel}>{t.distribution}</div>
+                                <div className={styles.iconRow}>
+                                    {noiseGlyphs.map((glyph, index) =>
+                                        tooltipButton(glyph, noiseMode === index, t.modes[index][0], t.modes[index][1], () => fire("SetNoiseMode", index))
+                                    )}
                                 </div>
-                                <div className={styles.pathControlsPair}>
-                                    <div className={styles.pathControlCell}><NumberControl label={t.pathClearingSize} value={pathClearingSize} min={10} max={200} step={5} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathClearingSizeTip} onChange={value => fire("SetPathClearingSize", value)} /></div>
-                                    <div className={classNames(styles.pathControlCell, styles.seedControlCell)}><NumberControl label={t.pathSeed} value={pathSeed} min={1} max={999999} step={1} unit="" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.pathSeedTip} onChange={value => fire("SetPathSeed", value)} /></div>
-                                </div>
-                            </div>
-                            <button type="button" className={styles.paletteToggle}
-                                onClick={() => fire("RerollPathForest")}>{t.pathReroll}</button>
-                        </div>}
-                        {!pathForest && <div className={styles.distributionRow}>
-                            <div className={styles.settingLabel}>{t.distribution}</div>
-                            <div className={styles.iconRow}>
-                                {noiseGlyphs.map((glyph, index) =>
-                                    tooltipButton(glyph, noiseMode === index, t.modes[index][0], t.modes[index][1], () => fire("SetNoiseMode", index))
-                                )}
-                            </div>
-                        </div>}
+                            </div>}
 
-                        {(pathForest || noiseMode !== 0 || speciesGrouping !== 0) && (
-                            <div className={styles.noiseSettings}>
-                                <NumberControl label={t.noiseSize} value={noiseScale} min={10} max={200} step={5} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.noiseSizeTip} onChange={value => fire("SetNoiseScale", value)} />
-                                {(pathForest || noiseMode !== 0) && <NumberControl label={t.irregularity} value={noiseStrength} min={0} max={100} step={5} unit="%" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.irregularityTip} onChange={value => fire("SetNoiseStrength", value)} />}
-                            </div>
-                        )}
+                            {(pathForest || noiseMode !== 0 || speciesGrouping !== 0) && (
+                                <div className={styles.noiseSettings}>
+                                    <NumberControl label={t.noiseSize} value={noiseScale} min={10} max={200} step={5} unit="m" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.noiseSizeTip} onChange={value => fire("SetNoiseScale", value)} />
+                                    {(pathForest || noiseMode !== 0) && <NumberControl label={t.irregularity} value={noiseStrength} min={0} max={100} step={5} unit="%" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.irregularityTip} onChange={value => fire("SetNoiseStrength", value)} />}
+                                </div>
+                            )}
 
-                        <div className={styles.distributionRow}>
-                            <div className={styles.settingLabel}>{t.speciesGrouping}</div>
-                            <div className={styles.groupingRow}>
-                                {t.groupingLevels.map((label, index) => {
-                                    const button = (
-                                        <button
-                                            type="button"
-                                            aria-label={label}
-                                            aria-pressed={speciesGrouping === index}
-                                            className={classNames(styles.groupingButton, speciesGrouping === index && styles.selected)}
-                                            onClick={() => fire("SetSpeciesGrouping", index)}
-                                        >{label}</button>
-                                    );
-                                    return (
-                                        <span key={index} className={styles.groupingSlot}>
-                                            {Tooltip
-                                                ? <Tooltip tooltip={<><div className={tooltipTheme?.title}>{label}</div><div className={tooltipTheme?.content}>{t.speciesGroupingTip}</div></>}>{button}</Tooltip>
-                                                : button}
-                                        </span>
-                                    );
-                                })}
+                            <div className={styles.distributionRow}>
+                                <div className={styles.settingLabel}>{t.speciesGrouping}</div>
+                                <div className={styles.groupingRow}>
+                                    {t.groupingLevels.map((label, index) => {
+                                        const button = (
+                                            <button
+                                                type="button"
+                                                aria-label={label}
+                                                aria-pressed={speciesGrouping === index}
+                                                className={classNames(styles.groupingButton, speciesGrouping === index && styles.selected)}
+                                                onClick={() => fire("SetSpeciesGrouping", index)}
+                                            >{label}</button>
+                                        );
+                                        return (
+                                            <span key={index} className={styles.groupingSlot}>
+                                                {Tooltip
+                                                    ? <Tooltip tooltip={<><div className={tooltipTheme?.title}>{label}</div><div className={tooltipTheme?.content}>{t.speciesGroupingTip}</div></>}>{button}</Tooltip>
+                                                    : button}
+                                            </span>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
+                        </>}
                     </div>
                 </div>
             )}
@@ -977,22 +1009,29 @@ export const AdvancedForestBrushPanel = () => {
                     onMouseEnter={() => fire("SetPointerOverUI", true)}
                     onMouseLeave={() => fire("SetPointerOverUI", false)}
                     className={classNames(panelTheme, styles.previewOptionsMenu)}>
-                    <strong>{`${t.preview} – ${pathForest ? t.roadPreview : t.forestPreview}`}</strong>
-                    <div className={styles.previewChoices} role="group" aria-label={t.preview}>
-                        {previewChoices.map(([value, label, tip]) => {
-                            const selected = (pathForest ? roadPreview : forestPreview) === value;
-                            const button = <button type="button"
-                                className={classNames(styles.previewChoice, selected && styles.selected)}
-                                aria-pressed={selected} title={Tooltip ? undefined : tip}
-                                onClick={() => fire(pathForest ? "SetRoadPreview" : "SetForestPreview", value)}>{label}</button>;
-                            return <div key={value} className={styles.previewChoiceSlot}>
-                                {Tooltip ? <Tooltip tooltip={<><div className={tooltipTheme?.title}>{label}</div><div className={tooltipTheme?.content}>{tip}</div></>}>{button}</Tooltip> : button}
-                            </div>;
-                        })}
-                    </div>
+                    {!singleTree && <>
+                        <strong>{`${t.preview} – ${pathForest ? t.roadPreview : t.forestPreview}`}</strong>
+                        <div className={styles.previewChoices} role="group" aria-label={t.preview}>
+                            {previewChoices.map(([value, label, tip]) => {
+                                const selected = (pathForest ? roadPreview : forestPreview) === value;
+                                const button = <button type="button"
+                                    className={classNames(styles.previewChoice, selected && styles.selected)}
+                                    aria-pressed={selected} title={Tooltip ? undefined : tip}
+                                    onClick={() => fire(pathForest ? "SetRoadPreview" : "SetForestPreview", value)}>{label}</button>;
+                                return <div key={value} className={styles.previewChoiceSlot}>
+                                    {Tooltip ? <Tooltip tooltip={<><div className={tooltipTheme?.title}>{label}</div><div className={tooltipTheme?.content}>{tip}</div></>}>{button}</Tooltip> : button}
+                                </div>;
+                            })}
+                        </div>
+                        <div className={styles.divider} />
+                    </>}
+                    <strong>{t.randomRotation}</strong>
+                    <NumberControl label={t.randomRotationMin} value={randomRotationMin} min={0} max={randomRotationMax} step={5} unit="°" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetRandomRotationMin", value)} />
+                    <NumberControl label={t.randomRotationMax} value={randomRotationMax} min={randomRotationMin} max={360} step={5} unit="°" downTooltip={t.minus} upTooltip={t.plus} onChange={value => fire("SetRandomRotationMax", value)} />
+                    <NumberControl label={t.randomRotationChance} value={randomRotationChance} min={0} max={100} step={5} unit="%" downTooltip={t.minus} upTooltip={t.plus} tooltipText={t.randomRotationChanceTip} onChange={value => fire("SetRandomRotationChance", value)} />
                 </div>
             )}
-            {panelVisible && speciesPaletteActive && (
+            {panelVisible && !singleTree && speciesPaletteActive && (
                 <div
                     ref={paletteRef}
                     className={styles.paletteWindow}

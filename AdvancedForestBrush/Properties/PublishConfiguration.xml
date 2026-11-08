@@ -118,7 +118,7 @@
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="1.1.5" />
+	<ModVersion Value="1.1.6" />
 	<GameVersion Value="1.6.*" />
 
 	
@@ -129,6 +129,7 @@
 		Latest changes
 
 		- fixed an issue with the vegetation list shortcut. The clicked plant is now added on the first click, even when a different plant is selected.
+		- added minimum and maximum angles and a configurable chance for random vegetation rotation (ingame options and mod options).
 	</ChangeLog>
 
 	<!--Optional external links for your own mod.-->

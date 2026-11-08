@@ -12,8 +12,8 @@ namespace AdvancedForestBrush
 
     [FileLocation(nameof(AdvancedForestBrush))]
     [SettingsUITabOrder(kSection, kPreviewSection, kControlsSection)]
-    [SettingsUIGroupOrder(kDefaultsGroup, kForestPreviewGroup, kRoadPreviewGroup, kControlsGroup, kAboutGroup)]
-    [SettingsUIShowGroupName(kDefaultsGroup, kForestPreviewGroup, kRoadPreviewGroup, kControlsGroup, kAboutGroup)]
+    [SettingsUIGroupOrder(kDefaultsGroup, kRotationGroup, kForestPreviewGroup, kRoadPreviewGroup, kControlsGroup, kAboutGroup)]
+    [SettingsUIShowGroupName(kDefaultsGroup, kRotationGroup, kForestPreviewGroup, kRoadPreviewGroup, kControlsGroup, kAboutGroup)]
     [SettingsUIMouseAction(kRotateAction, ActionType.Button,
         SettingsUIInputActionAttribute.kDefaultRebindOptions,
         ModifierOptions.Allow, true, usages: new[] { Usages.kToolUsage })]
@@ -36,6 +36,7 @@ namespace AdvancedForestBrush
         public const string kDefaultsGroup = "Defaults";
         public const string kControlsGroup = "Bindings";
         public const string kAboutGroup = "About";
+        public const string kRotationGroup = "VegetationRotation";
         public const string kRotateAction = "RotateBrush";
         public const string kAddSpeciesAction = "AddSpeciesToList";
 
@@ -272,8 +273,36 @@ namespace AdvancedForestBrush
             set => m_RoadPreviewMode = math.clamp((int)value, 0, 2);
         }
 
-        [SettingsUISection(kSection, kDefaultsGroup)]
+        private int m_RandomRotationMin;
+        private int m_RandomRotationMax = 360;
+        private int m_RandomRotationChance;
+
+        [SettingsUIHidden]
         public bool RandomVegetationRotation { get; set; }
+
+        [SettingsUISlider(min = 0, max = 360, step = 5)]
+        [SettingsUISection(kSection, kRotationGroup)]
+        public int RandomRotationMin
+        {
+            get => m_RandomRotationMin;
+            set => m_RandomRotationMin = math.clamp(value, 0, m_RandomRotationMax);
+        }
+
+        [SettingsUISlider(min = 0, max = 360, step = 5)]
+        [SettingsUISection(kSection, kRotationGroup)]
+        public int RandomRotationMax
+        {
+            get => m_RandomRotationMax;
+            set => m_RandomRotationMax = math.clamp(value, m_RandomRotationMin, 360);
+        }
+
+        [SettingsUISlider(min = 0, max = 100, step = 5)]
+        [SettingsUISection(kSection, kRotationGroup)]
+        public int RandomRotationChance
+        {
+            get => m_RandomRotationChance;
+            set => m_RandomRotationChance = math.clamp(value, 0, 100);
+        }
 
         [SettingsUISection(kSection, kDefaultsGroup)]
         public bool ResetToDefaults
@@ -311,6 +340,9 @@ namespace AdvancedForestBrush
             m_ForestPreviewMode = -1;
             m_RoadPreviewMode = -1;
             RandomVegetationRotation = false;
+            RandomRotationMin = 0;
+            RandomRotationMax = 360;
+            RandomRotationChance = 100;
             DefaultShape = ForestBrushShape.Circle;
             DefaultCircleBrushSize = 100;
             DefaultShapeWidth = 100;

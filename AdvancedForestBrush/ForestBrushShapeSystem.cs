@@ -15,11 +15,18 @@ namespace AdvancedForestBrush
         internal const float MinimumPointDistance = 0.75f;
         private const float DoubleClickSeconds = 0.35f;
         private const float FeedbackSeconds = 0.55f;
+        private const float SingleTreeClickDegrees = 45f;
+        private const float SingleTreeDegreesPerPixel = 0.2f;
+        private const float SingleTreeDragThreshold = 3f;
 
         private ToolSystem m_ToolSystem;
         private ObjectToolSystem m_ObjectToolSystem;
         private ToolRaycastSystem m_ToolRaycastSystem;
         private PrefabSystem m_PrefabSystem;
+        private ForestSpeciesPlacementSystem m_SpeciesPlacement;
+        private bool m_TrackingSingleTreeRotation;
+        private bool m_DraggingSingleTreeRotation;
+        private float m_SingleTreeDragDelta;
         private InputAction m_ApplyAction;
         private InputAction m_PointerDeltaAction;
         private float m_LastClickTime = -10f;
@@ -33,6 +40,7 @@ namespace AdvancedForestBrush
             m_ObjectToolSystem = World.GetOrCreateSystemManaged<ObjectToolSystem>();
             m_ToolRaycastSystem = World.GetOrCreateSystemManaged<ToolRaycastSystem>();
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
+            m_SpeciesPlacement = World.GetOrCreateSystemManaged<ForestSpeciesPlacementSystem>();
 
             m_ApplyAction = new InputAction(
                 "AdvancedForestBrushApply",
@@ -49,6 +57,19 @@ namespace AdvancedForestBrush
 
         protected override void OnUpdate()
         {
+            bool singleTree = ForestBrushState.PanelVisible && ForestBrushState.SingleTreeMode &&
+                Mod.SingleTreeAddonEnabled && m_ToolSystem.activeTool == m_ObjectToolSystem &&
+                m_ObjectToolSystem.actualMode == ObjectToolSystem.Mode.Create;
+            if (singleTree)
+            {
+                UpdateSingleTreeRotationInput();
+            }
+            else
+            {
+                m_TrackingSingleTreeRotation = false;
+                m_SpeciesPlacement.ResetSingleTreeManualRotation();
+            }
+
             if (!ForestBrushState.PanelVisible)
             {
                 ForestBrushState.HasValidCursor = false;
@@ -109,6 +130,46 @@ namespace AdvancedForestBrush
             {
                 m_ObjectToolSystem.brushStrength = 0f;
                 RotateFromPointerDelta();
+            }
+        }
+
+        private void UpdateSingleTreeRotationInput()
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse == null)
+            {
+                m_TrackingSingleTreeRotation = false;
+                return;
+            }
+
+            if (mouse.rightButton.wasPressedThisFrame)
+            {
+                m_TrackingSingleTreeRotation = !ForestBrushState.PointerOverUI &&
+                    (m_ToolRaycastSystem.raycastFlags & RaycastFlags.UIDisable) == 0 &&
+                    m_ToolRaycastSystem.GetRaycastResult(out RaycastResult _);
+                m_DraggingSingleTreeRotation = false;
+                m_SingleTreeDragDelta = 0f;
+            }
+            else if (m_TrackingSingleTreeRotation && mouse.rightButton.isPressed)
+            {
+                m_SingleTreeDragDelta += mouse.delta.ReadValue().x;
+                if (m_DraggingSingleTreeRotation || math.abs(m_SingleTreeDragDelta) >= SingleTreeDragThreshold)
+                {
+                    m_DraggingSingleTreeRotation = true;
+                    m_SpeciesPlacement.RotateSingleTree(m_SingleTreeDragDelta * SingleTreeDegreesPerPixel);
+                    m_SingleTreeDragDelta = 0f;
+                }
+            }
+
+            if (m_TrackingSingleTreeRotation && !mouse.rightButton.isPressed)
+            {
+                if (mouse.rightButton.wasReleasedThisFrame && !m_DraggingSingleTreeRotation &&
+                    !ForestBrushState.PointerOverUI)
+                {
+                    m_SpeciesPlacement.RotateSingleTree(SingleTreeClickDegrees);
+                }
+
+                m_TrackingSingleTreeRotation = false;
             }
         }
 

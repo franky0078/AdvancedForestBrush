@@ -39,6 +39,15 @@ namespace AdvancedForestBrush
 
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "IsVisible", IsVegetationContext));
             AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "PanelVisible", () => ForestBrushState.PanelVisible));
+            AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "SingleTreeAvailable", CanUseSingleTree));
+            AddUpdateBinding(new GetterValueBinding<bool>(Mod.Id, "SingleTreeMode", () => ForestBrushState.SingleTreeMode));
+            AddBinding(new TriggerBinding(Mod.Id, "SelectSingleTree", () =>
+            {
+                if (ForestBrushState.PanelVisible && m_OwnsObjectToolState && CanUseSingleTree())
+                {
+                    SetSingleTreeMode(true);
+                }
+            }));
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "ForestPreview",
                 () => (int)(Mod.Settings?.ForestPreview ?? ForestPreviewMode.Legacy)));
             AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, "RoadPreview",
@@ -63,6 +72,12 @@ namespace AdvancedForestBrush
                 Mod.Settings.RandomVegetationRotation = !Mod.Settings.RandomVegetationRotation;
                 Mod.Settings.ApplyAndSave();
             }));
+            AddRotationOption("RandomRotationMin", settings => settings.RandomRotationMin,
+                (settings, value) => settings.RandomRotationMin = value, 0);
+            AddRotationOption("RandomRotationMax", settings => settings.RandomRotationMax,
+                (settings, value) => settings.RandomRotationMax = value, 360);
+            AddRotationOption("RandomRotationChance", settings => settings.RandomRotationChance,
+                (settings, value) => settings.RandomRotationChance = value, 100);
             AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesPalette", () => ForestSpeciesPalette.NamesJson));
             AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesIcons", () => ForestSpeciesPalette.IconsJson));
             AddUpdateBinding(new GetterValueBinding<string>(Mod.Id, "SpeciesWeights", () => ForestSpeciesPalette.WeightsJson));
@@ -191,6 +206,20 @@ namespace AdvancedForestBrush
             AddBinding(new TriggerBinding<bool>(Mod.Id, "SetPointerOverUI", value => ForestBrushState.PointerOverUI = value));
         }
 
+        private void AddRotationOption(string name, System.Func<Setting, int> read,
+            System.Action<Setting, int> write, int fallback)
+        {
+            AddUpdateBinding(new GetterValueBinding<int>(Mod.Id, name,
+                () => Mod.Settings != null ? read(Mod.Settings) : fallback));
+            AddBinding(new TriggerBinding<int>(Mod.Id, "Set" + name, value =>
+            {
+                var settings = Mod.Settings;
+                if (settings == null) return;
+                write(settings, value);
+                settings.ApplyAndSave();
+            }));
+        }
+
         private static void SavePaletteWindowLayout(string layout)
         {
             var values = layout?.Split(',');
@@ -217,9 +246,18 @@ namespace AdvancedForestBrush
                 return;
             }
 
+            if (ForestBrushState.SingleTreeMode &&
+                m_ToolSystem.activeTool == m_ObjectToolSystem &&
+                m_ObjectToolSystem.mode == ObjectToolSystem.Mode.Create &&
+                !CanUseSingleTree())
+            {
+                SetSingleTreeMode(false);
+            }
 
-            // new tool selection from UIUpdate.
-            if (!IsVegetationBrush())
+            ObjectToolSystem.Mode expectedMode = ForestBrushState.SingleTreeMode
+                ? ObjectToolSystem.Mode.Create : ObjectToolSystem.Mode.Brush;
+            if (!IsVegetationContext() || m_ToolSystem.activeTool != m_ObjectToolSystem ||
+                m_ObjectToolSystem.mode != expectedMode)
             {
                 ClosePanel(m_ToolSystem.activeTool == m_ObjectToolSystem);
                 return;
@@ -230,6 +268,11 @@ namespace AdvancedForestBrush
             if (m_ShortcutAddFrames > 0 && --m_ShortcutAddFrames == 0)
             {
                 AddCurrentSpecies();
+            }
+
+            if (ForestBrushState.SingleTreeMode)
+            {
+                return;
             }
 
             if (ForestBrushState.Shape == ForestBrushShape.Circle)
@@ -291,7 +334,8 @@ namespace AdvancedForestBrush
         }
 
         private bool CanAddSpeciesWithShortcut() =>
-            ForestBrushState.PanelVisible && ForestSpeciesPalette.Active && ForestBrushInput.IsAddingSpecies;
+            ForestBrushState.PanelVisible && !ForestBrushState.SingleTreeMode &&
+            ForestSpeciesPalette.Active && ForestBrushInput.IsAddingSpecies;
 
         private void TryAddCatalogSpeciesShortcut(int prefabIndex)
         {
@@ -339,6 +383,7 @@ namespace AdvancedForestBrush
         private void ClosePanel(bool restorePreviousTool)
         {
             ForestBrushState.PanelVisible = false;
+            ForestBrushState.SingleTreeMode = false;
             ForestSpeciesPalette.Active = false;
             ForestBrushState.PointerOverUI = false;
             ForestBrushState.HasValidCursor = false;
@@ -368,6 +413,26 @@ namespace AdvancedForestBrush
             m_OwnsObjectToolState = false;
         }
 
+        private bool CanUseSingleTree()
+        {
+            return Mod.SingleTreeAddonEnabled &&
+                m_ToolSystem.activeTool == m_ObjectToolSystem &&
+                m_ToolSystem.activePrefab != null &&
+                m_PrefabSystem.TryGetEntity(m_ToolSystem.activePrefab, out Entity prefab) &&
+                (EntityManager.HasComponent<PlantData>(prefab) || EntityManager.HasComponent<TreeData>(prefab));
+        }
+
+        private void SetSingleTreeMode(bool enabled)
+        {
+            ForestBrushState.SingleTreeMode = enabled;
+            ForestBrushState.HasValidCursor = false;
+            m_ObjectToolSystem.mode = enabled ? ObjectToolSystem.Mode.Create : ObjectToolSystem.Mode.Brush;
+            if (enabled)
+            {
+                m_ShortcutAddFrames = 0;
+            }
+        }
+
         private void SetShape(int value)
         {
             ForestBrushState.SetShape(value);
@@ -375,6 +440,11 @@ namespace AdvancedForestBrush
             if (!ForestBrushState.PanelVisible || !m_OwnsObjectToolState)
             {
                 return;
+            }
+
+            if (ForestBrushState.SingleTreeMode)
+            {
+                SetSingleTreeMode(false);
             }
 
             if (ForestBrushState.Shape == ForestBrushShape.Circle ||
@@ -440,13 +510,6 @@ namespace AdvancedForestBrush
                 math.max(10f, ForestBrushState.PolygonBoundingRadius * 3f);
         }
 
-        private bool IsVegetationBrush()
-        {
-            return IsVegetationContext() &&
-                m_ToolSystem.activeTool == m_ObjectToolSystem &&
-                m_ObjectToolSystem.actualMode == ObjectToolSystem.Mode.Brush;
-        }
-
         private bool IsVegetationContext()
         {
             if ((m_ToolSystem.activeTool != m_ObjectToolSystem &&
@@ -457,7 +520,7 @@ namespace AdvancedForestBrush
                 return false;
             }
 
-            return EntityManager.HasComponent<PlantData>(prefabEntity);
+            return EntityManager.HasComponent<PlantData>(prefabEntity) || EntityManager.HasComponent<TreeData>(prefabEntity);
         }
 
         protected override void OnDestroy()

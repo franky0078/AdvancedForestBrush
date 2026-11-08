@@ -29,13 +29,15 @@ namespace AdvancedForestBrush
         {
             if (!ForestBrushState.PanelVisible ||
                 m_ToolSystem.activeTool != m_ObjectToolSystem ||
-                m_ObjectToolSystem.actualMode != ObjectToolSystem.Mode.Brush ||
+                (m_ObjectToolSystem.actualMode != ObjectToolSystem.Mode.Brush &&
+                 !(ForestBrushState.SingleTreeMode && Mod.SingleTreeAddonEnabled &&
+                   m_ObjectToolSystem.actualMode == ObjectToolSystem.Mode.Create)) ||
                 !m_ObjectToolSystem.decorationMode)
             {
                 return;
             }
 
-            // Mark the generated tree before the game commits the brush placement.
+            // Mark the generated tree before the game commits the placement.
             using NativeArray<Entity> trees = m_NewTrees.ToEntityArray(Allocator.Temp);
             foreach (Entity entity in trees)
             {

@@ -49,9 +49,8 @@ namespace AdvancedForestBrush
                 ForestBrushState.Shape != ForestBrushShape.Circle;
 
             bool detailedPreview = ForestBrushPreviewSystem.DetailedPreview;
-            bool randomRotation = Mod.Settings?.RandomVegetationRotation ?? false;
 
-            if (!randomRotation && !detailedPreview && !ForestBrushState.PathForest && !customShape &&
+            if (!detailedPreview && !ForestBrushState.PathForest && !customShape &&
                 ForestBrushState.NoiseMode == ForestNoiseMode.Uniform &&
                 ForestBrushState.SpeciesGrouping == 0 &&
                 ForestBrushState.DensityPercent >= 100)
@@ -144,13 +143,6 @@ namespace AdvancedForestBrush
                     continue;
                 }
                 kept++;
-                if (randomRotation)
-                {
-                    float angle = ForestBrushState.PlacementRandom(definition.m_Position,
-                        (uint)creation.m_RandomSeed ^ 0x4a39b70du) * (2f * math.PI);
-                    definition.m_Rotation = quaternion.RotateY(angle);
-                    commands.SetComponent(entity, definition);
-                }
             }
             commands.Playback(EntityManager);
             LogPlacementCounts(candidates, kept, shapeRejected, pathRejected,
