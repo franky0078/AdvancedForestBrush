@@ -54,7 +54,7 @@
 		- Optional vegetation list for mixing plants from different pages of the vegetation bar
 		- Plant Frequency species list option for controlling the frequency of each plant in the list
 		- Support for the game and editor
-		- English, German, Spanish, Italian, French localization
+		- Language support for all 12 in-game languages
 
 		- Detailed forest preview (Beta), optional detailed preview in the mod options to visualize forest patterns before planting, including noise variations and clearings.
 		- Legacy option to disable new Preview for better Performance on low-end systems
@@ -118,7 +118,7 @@
 
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/advanced-forest-brush.1942302/" />
 
-	<ModVersion Value="1.1.6" />
+	<ModVersion Value="1.2.0" />
 	<GameVersion Value="1.6.*" />
 
 	
@@ -128,8 +128,7 @@
 	<ChangeLog>
 		Latest changes
 
-		- fixed an issue with the vegetation list shortcut. The clicked plant is now added on the first click, even when a different plant is selected.
-		- added minimum and maximum angles and a configurable chance for random vegetation rotation (ingame options and mod options).
+		- added support for all ingame languages
 	</ChangeLog>
 
 	<!--Optional external links for your own mod.-->

@@ -153,7 +153,7 @@ const NumberControl = ({
     };
     const row = (
         <div className={styles.settingRow}>
-            <div className={styles.settingLabel}>{label}</div>
+            <div className={classNames(styles.settingLabel, label.length > 15 && styles.longLabel)}>{label}</div>
             <div className={styles.numberControl}>
                 <button title={downTooltip} onMouseDown={event => event.preventDefault()} onClick={() => stepBy(-1)}><Chevron /></button>
                 <div className={styles.numberValue}>
@@ -315,6 +315,8 @@ export const AdvancedForestBrushPanel = () => {
         translate(`AdvancedForestBrush.UI.${key}`, fallback) ?? fallback;
     const toolModeTitle =
         translate("Toolbar.TOOL_MODE_TITLE", "Tool Mode") ?? "Tool Mode";
+    const brushSizeTitle = translate("Toolbar.BRUSH_SIZE", "Brush Size") ?? "Brush Size";
+    const brushStrengthTitle = translate("Toolbar.BRUSH_STRENGTH", "Brush Strength") ?? "Brush Strength";
 
     const t = {
         preview: loc("Preview", "Preview"),
@@ -430,7 +432,7 @@ export const AdvancedForestBrushPanel = () => {
             const rect = panelRef.current?.getBoundingClientRect();
             const menu = previewMenuRef.current;
             if (!rect || !menu) return;
-            const gap = rect.width * 8 / 350;
+            const gap = rect.width * 8 / 380;
             const left = rect.right + gap + menu.offsetWidth <= window.innerWidth
                 ? rect.right + gap : rect.left - gap - menu.offsetWidth;
             setPreviewMenuPosition({
@@ -654,8 +656,10 @@ export const AdvancedForestBrushPanel = () => {
             "Force du pinceau",
             "Dimensione pennello",
             "Robustezza pennello",
-            "Forza pennello"
-        ].map(normalizeLabel));
+            "Forza pennello",
+            brushSizeTitle,
+            brushStrengthTitle
+        ].map(normalizeLabel).filter(Boolean));
 
         const hideExternalBrushRows = () => {
             const ownPanel = panelRef.current;
@@ -689,7 +693,7 @@ export const AdvancedForestBrushPanel = () => {
                 row.style.display = display;
             }
         };
-    }, [panelVisible]);
+    }, [panelVisible, brushSizeTitle, brushStrengthTitle]);
 
     if (!visible) return null;
 
@@ -975,8 +979,8 @@ export const AdvancedForestBrushPanel = () => {
                                 </div>
                             )}
 
-                            <div className={styles.distributionRow}>
-                                <div className={styles.settingLabel}>{t.speciesGrouping}</div>
+                            <div className={classNames(styles.distributionRow, styles.speciesGroupingRow)}>
+                                <div className={classNames(styles.settingLabel, t.speciesGrouping.length > 15 && styles.longLabel)}>{t.speciesGrouping}</div>
                                 <div className={styles.groupingRow}>
                                     {t.groupingLevels.map((label, index) => {
                                         const button = (
@@ -984,7 +988,7 @@ export const AdvancedForestBrushPanel = () => {
                                                 type="button"
                                                 aria-label={label}
                                                 aria-pressed={speciesGrouping === index}
-                                                className={classNames(styles.groupingButton, speciesGrouping === index && styles.selected)}
+                                                className={classNames(styles.groupingButton, label.length > 6 && styles.longLabel, speciesGrouping === index && styles.selected)}
                                                 onClick={() => fire("SetSpeciesGrouping", index)}
                                             >{label}</button>
                                         );
