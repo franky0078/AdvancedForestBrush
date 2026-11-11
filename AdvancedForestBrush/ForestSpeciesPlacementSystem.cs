@@ -84,6 +84,13 @@ namespace AdvancedForestBrush
 
         protected override void OnUpdate()
         {
+            ForestBrushProfiler.Begin(ForestBrushProfiler.Species);
+            UpdatePlacement();
+            ForestBrushProfiler.End(ForestBrushProfiler.Species);
+        }
+
+        private void UpdatePlacement()
+        {
             bool singleTree = ForestBrushState.SingleTreeMode && Mod.SingleTreeAddonEnabled &&
                 m_ObjectToolSystem.actualMode == ObjectToolSystem.Mode.Create;
             if (!ForestBrushState.PanelVisible ||

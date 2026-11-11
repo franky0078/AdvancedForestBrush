@@ -38,6 +38,13 @@ namespace AdvancedForestBrush
 
         protected override void OnUpdate()
         {
+            ForestBrushProfiler.Begin(ForestBrushProfiler.Filter);
+            UpdatePlacement();
+            ForestBrushProfiler.End(ForestBrushProfiler.Filter);
+        }
+
+        private void UpdatePlacement()
+        {
             if (!ForestBrushState.PanelVisible ||
                 m_ToolSystem.activeTool != m_ObjectToolSystem ||
                 m_ObjectToolSystem.actualMode != ObjectToolSystem.Mode.Brush)

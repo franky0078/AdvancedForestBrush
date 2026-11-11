@@ -43,6 +43,9 @@ namespace AdvancedForestBrush
         private uint m_PathSignature;
         private uint m_PatternSignature;
         private bool m_PatternBuilt;
+        private int m_PatternIndex, m_PatternTextureSize;
+        private float m_PatternWidth, m_PatternLength;
+        private const double PatternBudgetMs = 2.5;
         private bool[] m_PatternInside;
         private int[] m_PatternRoadIndices;
         private const int RoadMaskSize = 64;
@@ -50,6 +53,13 @@ namespace AdvancedForestBrush
         private readonly float[] m_RoadDistances = new float[RoadMaskSize * RoadMaskSize];
         private readonly bool[] m_RoadSampleNeeded = new bool[RoadMaskSize * RoadMaskSize];
         private int m_RoadDistanceIndex;
+        private const int LatticeMaximumSize = 1024;
+        private const float LatticeUnknown = -1f;
+        private float[] m_Lattice, m_LatticeSwap;
+        private int m_LatticeSize, m_LatticeX, m_LatticeY;
+        private float m_LatticeSpacing = 1f, m_LatticeInverse = 1f;
+        private uint m_LatticeKey;
+        private bool m_LatticeValid;
         private ForestPathNetworkSystem.PatternSample[] m_PathPattern;
         private Color32[] m_PatternPixels;
         private uint m_PendingPathSignature;
@@ -101,6 +111,13 @@ namespace AdvancedForestBrush
 
         protected override void OnUpdate()
         {
+            ForestBrushProfiler.Begin(ForestBrushProfiler.Preview);
+            UpdatePreview();
+            ForestBrushProfiler.End(ForestBrushProfiler.Preview);
+        }
+
+        private void UpdatePreview()
+        {
             if (!m_OwnsBrushRenderCallback) return;
             bool customPreview =
                 ForestBrushState.PanelVisible &&
@@ -110,6 +127,7 @@ namespace AdvancedForestBrush
             {
                 m_PathBuilt = false;
                 m_PathPending = false;
+                m_LatticeValid = false;
                 return;
             }
 
@@ -120,8 +138,10 @@ namespace AdvancedForestBrush
             }
             else
             {
+                // Roads may change while another tool is active.
                 m_PathBuilt = false;
                 m_PathPending = false;
+                m_LatticeValid = false;
             }
 
             if ((ForestBrushState.Shape == ForestBrushShape.Square ||
@@ -264,13 +284,21 @@ namespace AdvancedForestBrush
                     (uint)ForestBrushState.PathClearings, (uint)ForestBrushState.PathClearingSize));
                 settings = math.hash(new uint2(settings, (uint)ForestBrushState.PathWidth));
             }
-            if (!m_PatternBuilt || settings != m_PatternSignature)
+            if (m_PatternTextureSize == 0 || settings != m_PatternSignature)
             {
-                BuildPattern(width, length);
+                // The previous preview stays visible until the new pattern is complete.
+                BeginPattern(width, length);
                 m_PatternSignature = settings;
-                m_PatternBuilt = true;
+                m_PatternBuilt = false;
                 m_PathPending = false;
-                m_PathBuilt = false;
+            }
+            if (!m_PatternBuilt)
+            {
+                if (!ContinuePattern()) return;
+                m_PatternBuilt = true;
+                // Without roads the pattern itself is the preview and must be uploaded once.
+                if (!ForestBrushState.PathForest) m_PathBuilt = false;
+                ForestBrushProfiler.CountPatternBuild();
             }
 
             if (!ForestBrushState.PathForest)
@@ -290,7 +318,8 @@ namespace AdvancedForestBrush
                 return;
             }
 
-            uint geometry = math.hash(new uint3((uint)m_PathNetwork.Version,
+            // The cache following the brush does not change any distance, so it must not restart the preview.
+            uint geometry = math.hash(new uint3((uint)m_PathNetwork.RoadsVersion,
                 (uint)ForestBrushState.PathGap, (uint)ForestBrushState.PathWidth));
             // Do not combine rows evaluated against two different road snapshots.
             if (m_PathPending && geometry != m_PendingPathGeometry)
@@ -315,11 +344,12 @@ namespace AdvancedForestBrush
                 m_PathPixelIndex = 0;
                 m_RoadDistanceIndex = 0;
                 m_PathPending = true;
+                PrepareLattice(center.xz, width, length, geometry);
             }
             m_PathPreviewTimer.Restart();
             for (; m_RoadDistanceIndex < m_RoadDistances.Length; m_RoadDistanceIndex++)
             {
-                if ((m_RoadDistanceIndex & 63) == 0 &&
+                if ((m_RoadDistanceIndex & 7) == 0 &&
                     m_PathPreviewTimer.Elapsed.TotalMilliseconds >= PathPreviewBudgetMs) break;
                 if (!m_RoadSampleNeeded[m_RoadDistanceIndex])
                 {
@@ -330,7 +360,7 @@ namespace AdvancedForestBrush
                 float2 world = m_PendingPathCenter.xz + new float2(
                     local.x * m_PendingPathCosine + local.y * m_PendingPathSine,
                     -local.x * m_PendingPathSine + local.y * m_PendingPathCosine);
-                m_RoadDistances[m_RoadDistanceIndex] = m_PathNetwork.InwardDistance(world);
+                m_RoadDistances[m_RoadDistanceIndex] = LatticeDistance(world);
             }
             if (m_RoadDistanceIndex < m_RoadDistances.Length)
             {
@@ -345,14 +375,11 @@ namespace AdvancedForestBrush
                 float chance = 0f;
                 if (m_PatternInside[m_PathPixelIndex])
                 {
-                    // Nearest sampling preserves zero road exclusions instead of
-                    // interpolating positive distances across a road or a gap.
                     float inward = m_RoadDistances[m_PatternRoadIndices[m_PathPixelIndex]];
                     chance = DetailedPreview ? m_PathPattern[m_PathPixelIndex].Probability(inward)
                         : inward > 0f ? 1f : 0f;
                 }
-                m_PathPixels[m_PathPixelIndex] = new Color32(255, 255, 255,
-                    (byte)math.round(chance * density * 255f));
+                m_PathPixels[m_PathPixelIndex].a = (byte)(chance * density * 255f + 0.5f);
             }
             m_PathPreviewTimer.Stop();
             if (m_PathPixelIndex < m_PathPixels.Length) return;
@@ -365,9 +392,91 @@ namespace AdvancedForestBrush
             m_PathSignature = m_PendingPathSignature;
             m_PathBuilt = true;
             m_PathPending = false;
+            ForestBrushProfiler.CountPreviewFinished();
         }
 
-        private void BuildPattern(float width, float length)
+        private void PrepareLattice(float2 center, float width, float length, uint geometry)
+        {
+            float halfDiagonal = 0.5f * PreviewScale * math.sqrt(width * width + length * length);
+            float spacing = math.max(0.05f, math.min(width, length) * PreviewScale / RoadMaskSize);
+            int reach = (int)math.ceil(halfDiagonal / spacing) + 2;
+            if (reach * 2 + 1 > LatticeMaximumSize)
+            {
+                spacing = halfDiagonal * 2f / (LatticeMaximumSize - 8);
+                reach = (int)math.ceil(halfDiagonal / spacing) + 2;
+            }
+            int size = math.min(LatticeMaximumSize, reach * 2 + 1 + 2 * math.max(16, reach / 2));
+            uint key = math.hash(new uint3(geometry, math.asuint(spacing), (uint)size));
+            int centerX = (int)math.floor(center.x / spacing);
+            int centerY = (int)math.floor(center.y / spacing);
+
+            if (!m_LatticeValid || key != m_LatticeKey || m_Lattice == null || m_LatticeSize != size)
+            {
+                if (m_Lattice == null || m_Lattice.Length != size * size)
+                {
+                    m_Lattice = new float[size * size];
+                    m_LatticeSwap = new float[size * size];
+                }
+                for (int i = 0; i < m_Lattice.Length; i++) m_Lattice[i] = LatticeUnknown;
+                m_LatticeSize = size;
+                m_LatticeSpacing = spacing;
+                m_LatticeInverse = 1f / spacing;
+                m_LatticeX = centerX - size / 2;
+                m_LatticeY = centerY - size / 2;
+                m_LatticeKey = key;
+                m_LatticeValid = true;
+                return;
+            }
+
+            if (centerX - reach >= m_LatticeX && centerX + reach < m_LatticeX + size &&
+                centerY - reach >= m_LatticeY && centerY + reach < m_LatticeY + size) return;
+
+            int newX = centerX - size / 2, newY = centerY - size / 2;
+            int shiftX = newX - m_LatticeX, shiftY = newY - m_LatticeY;
+            float[] target = m_LatticeSwap;
+            for (int i = 0; i < target.Length; i++) target[i] = LatticeUnknown;
+            int copyX = math.max(0, -shiftX), sourceX = math.max(0, shiftX);
+            int columns = size - math.abs(shiftX);
+            if (columns > 0)
+            {
+                for (int y = 0; y < size; y++)
+                {
+                    int sourceY = y + shiftY;
+                    if (sourceY < 0 || sourceY >= size) continue;
+                    System.Array.Copy(m_Lattice, sourceY * size + sourceX, target, y * size + copyX, columns);
+                }
+            }
+            m_LatticeSwap = m_Lattice;
+            m_Lattice = target;
+            m_LatticeX = newX;
+            m_LatticeY = newY;
+        }
+
+        private float LatticeDistance(float2 world)
+        {
+            int x = (int)math.floor(world.x * m_LatticeInverse) - m_LatticeX;
+            int y = (int)math.floor(world.y * m_LatticeInverse) - m_LatticeY;
+            if (!m_LatticeValid || (uint)x >= (uint)m_LatticeSize || (uint)y >= (uint)m_LatticeSize)
+            {
+                ForestBrushProfiler.CountRoadSample();
+                return m_PathNetwork.InwardDistance(world);
+            }
+            int index = y * m_LatticeSize + x;
+            float value = m_Lattice[index];
+            if (value >= 0f) return value;
+
+            ForestBrushProfiler.CountRoadSample();
+            float2 point = new float2((x + m_LatticeX + 0.5f) * m_LatticeSpacing,
+                (y + m_LatticeY + 0.5f) * m_LatticeSpacing);
+            // Outside the road cache the answer is not reliable enough to remember.
+            if (!m_PathNetwork.Covers(point)) return m_PathNetwork.InwardDistance(world);
+            value = m_PathNetwork.InwardDistance(point);
+            m_Lattice[index] = value;
+            return value;
+        }
+
+        // Prepares everything that is cheap; the per-pixel noise follows in ContinuePattern.
+        private void BeginPattern(float width, float length)
         {
             int textureSize = DetailedPreview ? PreviewTextureSize : RoadMaskSize;
             int count = textureSize * textureSize;
@@ -378,6 +487,8 @@ namespace AdvancedForestBrush
             }
             if (m_PathTexture == null)
             {
+                // A new texture has no content yet, so nothing may be drawn from it.
+                m_PathBuilt = false;
                 m_PathTexture = new Texture2D(textureSize, textureSize,
                     TextureFormat.RGBA32, false, true)
                 {
@@ -400,10 +511,28 @@ namespace AdvancedForestBrush
                     ((i % RoadMaskSize + 0.5f) / RoadMaskSize - 0.5f) * width * PreviewScale,
                     ((i / RoadMaskSize + 0.5f) / RoadMaskSize - 0.5f) * length * PreviewScale);
             System.Array.Clear(m_RoadSampleNeeded, 0, m_RoadSampleNeeded.Length);
+            m_PatternTextureSize = textureSize;
+            m_PatternWidth = width;
+            m_PatternLength = length;
+            m_PatternIndex = 0;
+        }
 
+        private bool ContinuePattern()
+        {
+            int textureSize = m_PatternTextureSize;
+            int count = textureSize * textureSize;
+            float width = m_PatternWidth, length = m_PatternLength;
             float density = DetailedPreview ? math.min(1f, ForestBrushState.DensityPercent / 100f) : 1f;
-            for (int i = 0; i < count; i++)
+            m_PathPreviewTimer.Restart();
+            for (int i = m_PatternIndex; i < count; i++)
             {
+                if ((i & 31) == 0 && i != m_PatternIndex &&
+                    m_PathPreviewTimer.Elapsed.TotalMilliseconds >= PatternBudgetMs)
+                {
+                    m_PatternIndex = i;
+                    m_PathPreviewTimer.Stop();
+                    return false;
+                }
                 float2 local = new float2(((i % textureSize + 0.5f) / textureSize - 0.5f) * width * PreviewScale,
                     ((i / textureSize + 0.5f) / textureSize - 0.5f) * length * PreviewScale);
                 bool inside = ForestBrushState.Shape == ForestBrushShape.Circle
@@ -425,7 +554,12 @@ namespace AdvancedForestBrush
                 }
                 m_PatternPixels[i] = new Color32(255, 255, 255,
                     (byte)math.round(chance * density * 255f));
+                // The road pass only rewrites the alpha channel.
+                m_PathPixels[i] = new Color32(255, 255, 255, 0);
             }
+            m_PatternIndex = count;
+            m_PathPreviewTimer.Stop();
+            return true;
         }
 
         private void BuildPolygonTexture()

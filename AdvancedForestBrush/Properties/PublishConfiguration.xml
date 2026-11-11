@@ -55,8 +55,7 @@
 		- Plant Frequency species list option for controlling the frequency of each plant in the list
 		- Support for the game and editor
 		- Language support for all 12 in-game languages
-
-		- Detailed forest preview (Beta), optional detailed preview in the mod options to visualize forest patterns before planting, including noise variations and clearings.
+		- Detailed forest preview, optional detailed preview in the mod options to visualize forest patterns before planting, including noise variations and clearings.
 		- Legacy option to disable new Preview for better Performance on low-end systems
 
 
@@ -129,6 +128,7 @@
 		Latest changes
 
 		- added support for all ingame languages
+		- performance update for forest along path and detailed preview
 	</ChangeLog>
 
 	<!--Optional external links for your own mod.-->

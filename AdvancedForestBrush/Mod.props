@@ -1,10 +1,16 @@
 <Project>
-  <PropertyGroup>
-    <!-- Change only this value, then rebuild the project. -->
-    <ModVersion>1.2.0</ModVersion>
-    <Version>$(ModVersion)</Version>
-    <AssemblyVersion>$(ModVersion).0</AssemblyVersion>
-    <FileVersion>$(ModVersion).0</FileVersion>
-    <InformationalVersion>$(ModVersion)</InformationalVersion>
-  </PropertyGroup>
+	<PropertyGroup>
+		<!-- Change only this value, then rebuild the project. -->
+		<ModVersion>1.2.0</ModVersion>
+		<Version>$(ModVersion)</Version>
+		<AssemblyVersion>$(ModVersion).0</AssemblyVersion>
+		<FileVersion>$(ModVersion).0</FileVersion>
+		<InformationalVersion>$(ModVersion)</InformationalVersion>
+	</PropertyGroup>
+	<PropertyGroup>
+		<!-- Developer switch: true compiles the per-frame timing (ForestBrushProfiler) into the mod.
+         Keep it false for every published build. -->
+		<ForestBrushProfiling>false</ForestBrushProfiling>
+		<DefineConstants Condition="'$(ForestBrushProfiling)' == 'true'">$(DefineConstants);AFB_PROFILING</DefineConstants>
+	</PropertyGroup>
 </Project>
